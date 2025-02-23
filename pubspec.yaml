@@ -1,0 +1,39 @@
+name: vocary
+description: "A new Flutter project."
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.7.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  shadcn_ui: ^0.20.2
+  google_fonts: ^6.2.1
+  signals: ^6.0.2
+  shared_preferences: ^2.5.2
+  dio: ^5.8.0+1
+  flutter_dotenv: ^5.2.1
+  pretty_dio_logger: ^1.4.0
+  logger: ^2.5.0
+  sembast: ^3.8.4
+  path_provider: ^2.1.5
+  dio_cache_interceptor_sembast_storage: ^0.2.0
+  dio_cache_interceptor: ^3.5.1
+  go_router: ^14.8.0
+  animated_bottom_navigation_bar: ^1.4.0
+  lucide_icons_flutter: ^1.2.7
+  syncfusion_flutter_charts: ^28.2.6
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/env/.env.dev
+    - assets/env/.env.prod
