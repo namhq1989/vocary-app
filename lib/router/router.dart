@@ -4,6 +4,7 @@ import 'package:vocary/resources/screens/collection_detail_screen.dart';
 import 'package:vocary/resources/screens/collection_list_words_screen.dart';
 import 'package:vocary/resources/screens/home_screen.dart';
 import 'package:vocary/resources/screens/navbar.dart';
+import 'package:vocary/resources/screens/practice_screen.dart';
 import 'package:vocary/resources/screens/splash_screen.dart';
 import 'package:vocary/resources/screens/onboarding_screen.dart';
 import 'package:vocary/resources/screens/profile_screen.dart';
@@ -78,6 +79,12 @@ class AppRouter {
             pageBuilder: (context, state) {
               final id = state.pathParameters['id'];
               return WordDetailScreen(wordId: id!);
+            },
+          ),
+          transitionGoRoute(
+            path: AppRoutes.practice,
+            pageBuilder: (context, state) {
+              return PracticeScreen();
             },
           ),
           transitionGoRoute(

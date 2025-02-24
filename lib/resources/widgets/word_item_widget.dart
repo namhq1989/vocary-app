@@ -89,7 +89,7 @@ class WordItemWidget extends StatelessWidget {
             // Word Meaning
             Text(
               truncatedMeaning,
-              style: TextStyle(fontSize: 11),
+              style: TextStyle(fontSize: 12),
               maxLines: 4,
               overflow: TextOverflow.ellipsis,
             ),

@@ -7,6 +7,7 @@ import 'package:vocary/app/signals/theme_signal.dart';
 import 'package:vocary/router/router.dart';
 
 final buttonTheme = ShadButtonTheme(
+  width: double.infinity,
   decoration: ShadDecoration().copyWith(
     border: ShadBorder(radius: BorderRadius.circular(12)),
   ),
