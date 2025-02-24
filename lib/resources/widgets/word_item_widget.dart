@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:vocary/app/models/word.dart';
 import 'package:vocary/core/design.dart';
+import 'package:vocary/router/routes.dart';
 
 class WordItemWidget extends StatelessWidget {
   final Word word;
-  final Function() onTap;
 
-  const WordItemWidget({super.key, required this.word, required this.onTap});
+  const WordItemWidget({super.key, required this.word});
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +21,7 @@ class WordItemWidget extends StatelessWidget {
 
     return InkWell(
       onTap: () {
-        onTap();
+        context.push(AppRoutes.wordDetailUrl('123'));
       },
       child: Container(
         padding: const EdgeInsets.all(12),

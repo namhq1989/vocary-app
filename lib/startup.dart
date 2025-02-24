@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:vocary/app/controllers/theme_controller.dart';
 import 'package:vocary/core/http.dart';
 import 'package:vocary/core/storage.dart';
 
@@ -9,7 +10,6 @@ class Startup {
     WidgetsFlutterBinding.ensureInitialized();
 
     await _loadEnv(env);
-    await _loadConfigs();
     await _initializeStorage();
     await _initializeHttp();
     await _preloadData();
@@ -18,10 +18,6 @@ class Startup {
   static Future<void> _loadEnv(String env) async {
     String envFilePath = 'assets/env/.env.$env';
     await dotenv.load(fileName: envFilePath);
-  }
-
-  static Future<void> _loadConfigs() async {
-    print("Configurations loaded.");
   }
 
   static Future<void> _initializeStorage() async {
@@ -33,6 +29,6 @@ class Startup {
   }
 
   static Future<void> _preloadData() async {
-    print("Preloaded data");
+    await ThemeController.loadTheme();
   }
 }

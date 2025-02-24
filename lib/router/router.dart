@@ -1,12 +1,15 @@
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 import 'package:vocary/resources/screens/collection_detail_screen.dart';
+import 'package:vocary/resources/screens/collection_list_words_screen.dart';
 import 'package:vocary/resources/screens/home_screen.dart';
 import 'package:vocary/resources/screens/navbar.dart';
+import 'package:vocary/resources/screens/splash_screen.dart';
 import 'package:vocary/resources/screens/onboarding_screen.dart';
 import 'package:vocary/resources/screens/profile_screen.dart';
 import 'package:vocary/resources/screens/review_screen.dart';
 import 'package:vocary/resources/screens/sign_in_screen.dart';
+import 'package:vocary/resources/screens/word_detail_screen.dart';
 import 'package:vocary/router/routes.dart';
 
 GoRoute transitionGoRoute({
@@ -32,9 +35,13 @@ GoRoute transitionGoRoute({
 
 class AppRouter {
   static final GoRouter router = GoRouter(
-    initialLocation: AppRoutes.onboarding,
+    initialLocation: AppRoutes.splash,
     routes: [
       // No-auth routes
+      transitionGoRoute(
+        path: AppRoutes.splash,
+        pageBuilder: (context, state) => const SplashScreen(),
+      ),
       transitionGoRoute(
         path: AppRoutes.onboarding,
         pageBuilder: (context, state) => const OnboardingScreen(),
@@ -57,6 +64,20 @@ class AppRouter {
             pageBuilder: (context, state) {
               final id = state.pathParameters['id'];
               return CollectionDetailScreen(collectionId: id!);
+            },
+          ),
+          transitionGoRoute(
+            path: AppRoutes.collectionListWords,
+            pageBuilder: (context, state) {
+              final id = state.pathParameters['id'];
+              return CollectionListWordsScreen(collectionId: id!);
+            },
+          ),
+          transitionGoRoute(
+            path: AppRoutes.wordDetail,
+            pageBuilder: (context, state) {
+              final id = state.pathParameters['id'];
+              return WordDetailScreen(wordId: id!);
             },
           ),
           transitionGoRoute(

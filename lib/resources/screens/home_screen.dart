@@ -488,7 +488,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 child: SizedBox(
                   width: 160, // Adjust width for a single word card
-                  child: WordItemWidget(word: randomWords[index], onTap: () {}),
+                  child: WordItemWidget(word: randomWords[index]),
                 ),
               );
             },

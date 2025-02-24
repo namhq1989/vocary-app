@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:vocary/app/models/word.dart';
 import 'package:vocary/core/design.dart';
 import 'package:vocary/resources/widgets/word_item_widget.dart';
+import 'package:vocary/router/routes.dart';
 
 final List<Word> learnedWords = [
   Word(
@@ -254,12 +256,14 @@ class CollectionDetailScreen extends StatelessWidget {
               ),
               const SizedBox(height: 32),
               _buildWordSection(
+                context: context,
                 title: 'Learned Words',
                 subtitle: '${learnedWords.length} words',
                 words: learnedWords,
               ),
               const SizedBox(height: 32),
               _buildWordSection(
+                context: context,
                 title: 'Words to Learn',
                 subtitle: '${notLearnedWords.length} words remaining',
                 words: notLearnedWords,
@@ -315,6 +319,7 @@ class CollectionDetailScreen extends StatelessWidget {
   }
 
   Widget _buildWordSection({
+    required BuildContext context,
     required String title,
     required String subtitle,
     required List<Word> words,
@@ -339,7 +344,9 @@ class CollectionDetailScreen extends StatelessWidget {
                 ],
               ),
               TextButton(
-                onPressed: () {},
+                onPressed: () {
+                  context.push(AppRoutes.collectionListWordsUrl('123'));
+                },
                 child: Row(
                   children: [
                     Text('See all', style: TextStyle(fontSize: 13)),
@@ -364,7 +371,7 @@ class CollectionDetailScreen extends StatelessWidget {
           ),
           itemCount: words.length.clamp(0, 10), // Using unlearned words
           itemBuilder: (context, index) {
-            return WordItemWidget(word: words[index], onTap: () {});
+            return WordItemWidget(word: words[index]);
           },
         ),
       ],

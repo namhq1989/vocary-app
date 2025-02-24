@@ -1,5 +1,6 @@
 class AppRoutes {
   // No-auth routes
+  static const String splash = '/splash';
   static const String onboarding = '/onboarding';
   static const String signIn = '/sign-in';
 
@@ -9,7 +10,10 @@ class AppRoutes {
   static const String profile = '/profile';
 
   static const String collectionDetail = '/collection/:id';
+  static const String collectionListWords = '/collection/:id/words';
+  static const String wordDetail = '/word/:id';
 
+  static String splashUrl() => '/splash';
   static String onboardingUrl() => onboarding;
   static String signInUrl() => signIn;
 
@@ -18,4 +22,6 @@ class AppRoutes {
   static String profileUrl() => profile;
 
   static String collectionDetailUrl(String id) => '/collection/$id';
+  static String collectionListWordsUrl(String id) => '/collection/$id/words';
+  static String wordDetailUrl(String id) => '/word/$id';
 }

@@ -6,6 +6,12 @@ import 'package:signals/signals_flutter.dart';
 import 'package:vocary/app/signals/theme_signal.dart';
 import 'package:vocary/router/router.dart';
 
+final buttonTheme = ShadButtonTheme(
+  decoration: ShadDecoration().copyWith(
+    border: ShadBorder(radius: BorderRadius.circular(12)),
+  ),
+);
+
 class App extends StatefulWidget {
   const App({super.key});
 
@@ -27,21 +33,17 @@ class _AppState extends State<App> {
         textTheme: ShadTextTheme.fromGoogleFont(GoogleFonts.poppins),
         brightness: Brightness.light,
         colorScheme: const ShadSlateColorScheme.light(),
-        primaryButtonTheme: ShadButtonTheme(
-          decoration: ShadDecoration().copyWith(
-            border: ShadBorder(radius: BorderRadius.circular(12)),
-          ),
-        ),
+        primaryButtonTheme: buttonTheme,
+        destructiveButtonTheme: buttonTheme,
+        outlineButtonTheme: buttonTheme,
       ),
       darkTheme: ShadThemeData(
         textTheme: ShadTextTheme.fromGoogleFont(GoogleFonts.poppins),
         brightness: Brightness.dark,
         colorScheme: const ShadSlateColorScheme.dark(),
-        primaryButtonTheme: ShadButtonTheme(
-          decoration: ShadDecoration().copyWith(
-            border: ShadBorder(radius: BorderRadius.circular(12)),
-          ),
-        ),
+        primaryButtonTheme: buttonTheme,
+        destructiveButtonTheme: buttonTheme,
+        outlineButtonTheme: buttonTheme,
       ),
       themeMode: mode,
       title: 'Vocary',

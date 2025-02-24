@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
+import 'package:signals/signals_flutter.dart';
+import 'package:vocary/app/controllers/auth_controller.dart';
+import 'package:vocary/app/signals/auth_signal.dart';
 import 'package:vocary/resources/widgets/theme_toggle_widget.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -7,6 +10,37 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    void showSignOutConfirmation() {
+      showShadDialog(
+        context: context,
+        builder:
+            (context) => ShadDialog.alert(
+              title: const Text('Vocary'),
+              description: Padding(
+                padding: EdgeInsets.only(bottom: 8),
+                child: Text('Are you sure you want to sign out?'),
+              ),
+              gap: 20,
+              actions: [
+                ShadButton.outline(
+                  width: double.infinity,
+                  child: const Text('Cancel'),
+                  onPressed: () => Navigator.of(context).pop(false),
+                ),
+                const SizedBox(height: 4),
+                ShadButton(
+                  width: double.infinity,
+                  onPressed: () {
+                    Navigator.of(context).pop(true);
+                    AuthController.onTapSignOut();
+                  },
+                  child: const Text('Sign Out'),
+                ),
+              ],
+            ),
+      );
+    }
+
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
@@ -113,35 +147,35 @@ class ProfileScreen extends StatelessWidget {
 
               const SizedBox(height: 32),
 
-              // // Sign Out Button
-              // Watch((context) {
-              //   final isSigningOut = AuthSignals.isSigningOut.value;
+              // Sign Out Button
+              Watch((context) {
+                final isSigningOut = AuthSignals.isSigningOut.value;
 
-              //   return TextButton(
-              //     onPressed: isSigningOut ? null : _showSignOutConfirmation,
-              //     child: Row(
-              //       mainAxisAlignment: MainAxisAlignment.center,
-              //       children: [
-              //         if (isSigningOut)
-              //           Container(
-              //             width: 16,
-              //             height: 16,
-              //             margin: const EdgeInsets.only(right: 8),
-              //             child: const CircularProgressIndicator(
-              //               strokeWidth: 2,
-              //               valueColor: AlwaysStoppedAnimation<Color>(
-              //                 Colors.red,
-              //               ),
-              //             ),
-              //           ),
-              //         Text(
-              //           isSigningOut ? 'Signing out...' : 'Sign out',
-              //           style: const TextStyle(fontSize: 18, color: Colors.red),
-              //         ),
-              //       ],
-              //     ),
-              //   );
-              // }),
+                return TextButton(
+                  onPressed: isSigningOut ? null : showSignOutConfirmation,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (isSigningOut)
+                        Container(
+                          width: 16,
+                          height: 16,
+                          margin: const EdgeInsets.only(right: 8),
+                          child: const CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.red,
+                            ),
+                          ),
+                        ),
+                      Text(
+                        isSigningOut ? 'Signing out...' : 'Sign out',
+                        style: const TextStyle(fontSize: 18, color: Colors.red),
+                      ),
+                    ],
+                  ),
+                );
+              }),
             ],
           ),
         ),
