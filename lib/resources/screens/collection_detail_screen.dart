@@ -3,8 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:vocary/app/models/word.dart';
 import 'package:vocary/core/design.dart';
-import 'package:vocary/core/logger.dart';
-import 'package:vocary/resources/widgets/practice_config_bottomsheet.dart';
+import 'package:vocary/resources/widgets/practice_config_bottom_sheet.dart';
 import 'package:vocary/resources/widgets/word_item_widget.dart';
 import 'package:vocary/router/routes.dart';
 
@@ -252,7 +251,7 @@ class CollectionDetailScreen extends StatelessWidget {
                   width: double.infinity,
                   child: const Text('Practice Now'),
                   onPressed: () {
-                    showPracticeConfigSheet(context);
+                    showPracticeConfigBottomSheet(context);
                   },
                 ),
               ),

@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:vocary/app/models/practice_config.dart';
-import 'package:vocary/router/router.dart';
-import 'package:vocary/router/routes.dart';
+import 'package:vocary/resources/widgets/practice_bottom_sheet.dart';
 
-void showPracticeConfigSheet(BuildContext context) {
+void showPracticeConfigBottomSheet(BuildContext context) {
   int selectedWordCount = 5;
   AnswerMethod selectedMethod = AnswerMethod.multipleChoice;
 
@@ -39,7 +38,6 @@ void showPracticeConfigSheet(BuildContext context) {
                     textAlign: TextAlign.start,
                   ),
                 ),
-                const SizedBox(height: 8),
                 Center(
                   child: Text(
                     "Settings",
@@ -48,7 +46,7 @@ void showPracticeConfigSheet(BuildContext context) {
                   ),
                 ),
                 const SizedBox(height: 40),
-                Text("Number of Words", style: theme.textTheme.large),
+                Text("Number of Words", style: theme.textTheme.table),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 12,
@@ -76,7 +74,7 @@ void showPracticeConfigSheet(BuildContext context) {
                       }).toList(),
                 ),
                 const SizedBox(height: 20),
-                Text("Answer Method", style: theme.textTheme.large),
+                Text("Answer Method", style: theme.textTheme.table),
                 const SizedBox(height: 8),
                 Row(
                   children:
@@ -112,7 +110,9 @@ void showPracticeConfigSheet(BuildContext context) {
                       onPressed: () {
                         Navigator.pop(context);
                         Future.delayed(const Duration(milliseconds: 200), () {
-                          AppRouter.router.push(AppRoutes.practiceUrl());
+                          if (context.mounted) {
+                            showPracticeBottomSheet(context);
+                          }
                         });
                       },
                       child: const Text("Start"),

@@ -7,6 +7,7 @@ import 'package:vocary/app/models/daily_points.dart';
 import 'package:vocary/app/models/quote.dart';
 import 'package:vocary/app/models/word.dart';
 import 'package:vocary/core/design.dart';
+import 'package:vocary/resources/widgets/practice_config_bottom_sheet.dart';
 import 'package:vocary/resources/widgets/word_item_widget.dart';
 import 'package:vocary/resources/widgets/word_of_the_day_widget.dart';
 import 'package:vocary/router/routes.dart';
@@ -426,7 +427,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 Text('words', style: TextStyle(fontSize: 13)),
                 const SizedBox(height: 8),
                 InkWell(
-                  onTap: () => {print('Practice Now')},
+                  onTap: () => {showPracticeConfigBottomSheet(context)},
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
