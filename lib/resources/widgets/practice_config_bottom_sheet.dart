@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:vocary/app/models/practice_config.dart';
-import 'package:vocary/resources/widgets/practice_bottom_sheet.dart';
+import 'package:vocary/router/router.dart';
+import 'package:vocary/router/routes.dart';
 
 void showPracticeConfigBottomSheet(BuildContext context) {
   int selectedWordCount = 5;
@@ -110,9 +111,7 @@ void showPracticeConfigBottomSheet(BuildContext context) {
                       onPressed: () {
                         Navigator.pop(context);
                         Future.delayed(const Duration(milliseconds: 200), () {
-                          if (context.mounted) {
-                            showPracticeBottomSheet(context);
-                          }
+                          AppRouter.router.push(AppRoutes.practiceUrl());
                         });
                       },
                       child: const Text("Start"),

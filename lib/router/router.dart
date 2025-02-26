@@ -82,10 +82,8 @@ class AppRouter {
             },
           ),
           transitionGoRoute(
-            path: AppRoutes.practice,
-            pageBuilder: (context, state) {
-              return PracticeScreen();
-            },
+            path: AppRoutes.practiceUrl(),
+            pageBuilder: (context, state) => const PracticeScreen(),
           ),
           transitionGoRoute(
             path: AppRoutes.review,
