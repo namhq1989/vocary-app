@@ -47,7 +47,7 @@ void showPracticeConfigBottomSheet(BuildContext context) {
                   ),
                 ),
                 const SizedBox(height: 40),
-                Text("Number of Words", style: theme.textTheme.table),
+                Text("Number of Words", style: theme.textTheme.p),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 12,
@@ -74,8 +74,8 @@ void showPracticeConfigBottomSheet(BuildContext context) {
                         );
                       }).toList(),
                 ),
-                const SizedBox(height: 20),
-                Text("Answer Method", style: theme.textTheme.table),
+                const SizedBox(height: 32),
+                Text("Answer Method", style: theme.textTheme.p),
                 const SizedBox(height: 8),
                 Row(
                   children:

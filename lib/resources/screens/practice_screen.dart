@@ -116,7 +116,6 @@ class _PracticeScreenState extends State<PracticeScreen>
     });
   }
 
-  // Smooth transition between UI modes
   void _transitionToSpeakingMode() {
     setState(() {
       isTransitioning = true;
@@ -125,14 +124,10 @@ class _PracticeScreenState extends State<PracticeScreen>
     _animationController.forward().then((_) {
       setState(() {
         isSpeakingMode = true;
-        isSubmitted = false;
+        isTransitioning = false;
       });
 
       _animationController.reset();
-
-      setState(() {
-        isTransitioning = false;
-      });
     });
   }
 
@@ -148,35 +143,34 @@ class _PracticeScreenState extends State<PracticeScreen>
       },
       child: Scaffold(
         body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              children: [
-                _buildCustomHeader(context),
-                const SizedBox(height: 24),
-                _buildHeader(context),
-                const SizedBox(height: 24),
+          child: Column(
+            children: [
+              const SizedBox(height: 8),
+              _buildCustomHeader(context),
+              _buildHeader(context),
+              const SizedBox(height: 8),
+              const Divider(height: 1),
+              const SizedBox(height: 64),
 
-                // Scrollable Content (Answers, Feedback, Submit Button)
-                Expanded(
-                  child: ScrollConfiguration(
-                    behavior: ScrollConfiguration.of(
-                      context,
-                    ).copyWith(scrollbars: false),
-                    child: SingleChildScrollView(
-                      physics:
-                          const ClampingScrollPhysics(), // Enables scrolling only if needed
-                      child: Padding(
-                        padding: const EdgeInsets.only(
-                          bottom: 32,
-                        ), // Space for better UX
-                        child: _buildPracticeContent(context),
-                      ),
+              // Scrollable Content (Answers, Feedback, Submit Button)
+              Expanded(
+                child: ScrollConfiguration(
+                  behavior: ScrollConfiguration.of(
+                    context,
+                  ).copyWith(scrollbars: false),
+                  child: SingleChildScrollView(
+                    physics:
+                        const ClampingScrollPhysics(), // Enables scrolling only if needed
+                    child: Padding(
+                      padding: const EdgeInsets.only(
+                        bottom: 32,
+                      ), // Space for better UX
+                      child: _buildPracticeContent(context),
                     ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -185,19 +179,18 @@ class _PracticeScreenState extends State<PracticeScreen>
 
   // New custom header widget
   Widget _buildCustomHeader(BuildContext context) {
-    final theme = ShadTheme.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           // Exercise title on the left
-          Text(
-            'Intermediate',
-            style: theme.textTheme.h4.copyWith(
-              color: theme.colorScheme.foreground,
-            ),
-          ),
+          // Text(
+          //   'Intermediate',
+          //   style: theme.textTheme.h4.copyWith(
+          //     color: theme.colorScheme.foreground,
+          //   ),
+          // ),
 
           // Close icon on the right
           IconButton(
@@ -220,55 +213,53 @@ class _PracticeScreenState extends State<PracticeScreen>
 
   Widget _buildHeader(BuildContext context) {
     final theme = ShadTheme.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Points & Progress in the same row (opposite sides)
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  LucideIcons.star,
-                  color: ShadTheme.of(context).colorScheme.foreground,
-                  size: 20,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  "$totalPoints Points",
-                  style: theme.textTheme.large.copyWith(
-                    fontWeight: FontWeight.bold,
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Points & Progress in the same row (opposite sides)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    LucideIcons.star,
+                    color: ShadTheme.of(context).colorScheme.foreground,
+                    size: 16,
                   ),
-                ),
-              ],
-            ),
-
-            Text(
-              "Stage: $completedExercises/$totalExercises",
-              style: theme.textTheme.large.copyWith(
-                fontWeight: FontWeight.bold,
+                  const SizedBox(width: 6),
+                  Text("$totalPoints Points", style: theme.textTheme.p),
+                ],
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
 
-        // Progress Bar
-        ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: LinearProgressIndicator(
-            value: completedExercises / totalExercises,
-            backgroundColor: theme.colorScheme.border,
-            valueColor: AlwaysStoppedAnimation<Color>(
-              theme.colorScheme.primary,
-            ),
-            minHeight: 8,
+              Text(
+                "Stage: $completedExercises/$totalExercises",
+                style: theme.textTheme.p,
+              ),
+            ],
           ),
-        ),
-      ],
+          const SizedBox(height: 8),
+
+          // Progress Bar
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: LinearProgressIndicator(
+              value: completedExercises / totalExercises,
+              backgroundColor: theme.colorScheme.border,
+              valueColor: AlwaysStoppedAnimation<Color>(
+                theme.colorScheme.primary,
+              ),
+              minHeight: 4,
+            ),
+          ),
+
+          const SizedBox(height: 8),
+        ],
+      ),
     );
   }
 
@@ -340,129 +331,148 @@ class _PracticeScreenState extends State<PracticeScreen>
 
     return SlideTransition(
       position: _slideOutAnimation,
-      child: Column(
-        key: const ValueKey("word_ui"),
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 8),
-          Text('Complete the sentence:', style: theme.textTheme.p),
-          const SizedBox(height: 24),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        child: Column(
+          key: const ValueKey("word_ui"),
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 8),
+            Text(
+              'Complete the sentence:',
+              style: theme.textTheme.p.copyWith(
+                color: theme.colorScheme.foreground.withAlpha(180),
+              ),
+            ),
+            const SizedBox(height: 24),
 
-          SentenceWithBlankWidget(
-            sentence: sentence,
-            wordToBlank: correctAnswer,
-            textStyle: const TextStyle(fontSize: 22, height: 1.4),
-          ),
-          const SizedBox(height: 16),
+            SentenceWithBlankWidget(
+              sentence: sentence,
+              wordToBlank: correctAnswer,
+              textStyle: const TextStyle(
+                fontSize: 20,
+                height: 1.4,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 24),
 
-          Column(
-            children: List.generate(options.length, (index) {
-              String option = options[index];
-              bool isSelected = selectedAnswer == option;
-              bool isCorrectOption = isSubmitted && option == correctAnswer;
-              bool isIncorrectOption =
-                  isSubmitted && isSelected && option != correctAnswer;
+            Column(
+              children: List.generate(options.length, (index) {
+                String option = options[index];
+                bool isSelected = selectedAnswer == option;
+                bool isCorrectOption = isSubmitted && option == correctAnswer;
+                bool isIncorrectOption =
+                    isSubmitted && isSelected && option != correctAnswer;
 
-              return GestureDetector(
-                onTap: () {
-                  if (!isSubmitted) {
-                    setState(() => selectedAnswer = option);
-                  }
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeInOut,
-                  margin: EdgeInsets.only(top: 6, bottom: 6, left: index * 2.0),
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 12,
-                    horizontal: 16,
-                  ),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    color:
-                        isCorrectOption
-                            ? AppColors.successColor.withAlpha(25)
-                            : isIncorrectOption
-                            ? AppColors.errorColor.withAlpha(25)
-                            : theme.colorScheme.background,
-                    border: Border.all(
+                return GestureDetector(
+                  onTap: () {
+                    if (!isSubmitted) {
+                      setState(() => selectedAnswer = option);
+                    }
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                    margin: EdgeInsets.only(
+                      top: 6,
+                      bottom: 6,
+                      left: index * 2.0,
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 12,
+                      horizontal: 16,
+                    ),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
                       color:
                           isCorrectOption
-                              ? AppColors.successColor
+                              ? AppColors.successColor.withAlpha(25)
                               : isIncorrectOption
-                              ? AppColors.errorColor
-                              : isSelected
-                              ? theme.colorScheme.primary
-                              : theme.colorScheme.border,
-                      width: 1.5,
-                    ),
-                    boxShadow: [
-                      if (!isSubmitted && !isSelected)
-                        BoxShadow(
-                          color: theme.colorScheme.border.withOpacity(0.2),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        )
-                      else if (isSelected && !isSubmitted)
-                        BoxShadow(
-                          color: theme.colorScheme.primary.withOpacity(0.3),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
-                        ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        option,
-                        style: theme.textTheme.p.copyWith(
-                          color:
-                              isCorrectOption
-                                  ? AppColors.successColor
-                                  : isIncorrectOption
-                                  ? AppColors.errorColor
-                                  : theme.colorScheme.foreground,
-                          fontWeight:
-                              isSelected || isCorrectOption || isIncorrectOption
-                                  ? FontWeight.w500
-                                  : FontWeight.normal,
-                        ),
+                              ? AppColors.errorColor.withAlpha(25)
+                              : theme.colorScheme.background,
+                      border: Border.all(
+                        color:
+                            isCorrectOption
+                                ? AppColors.successColor
+                                : isIncorrectOption
+                                ? AppColors.errorColor
+                                : isSelected
+                                ? theme.colorScheme.primary
+                                : theme.colorScheme.border,
+                        width: 1.5,
                       ),
-                      if (isSubmitted && (isCorrectOption || isIncorrectOption))
-                        Icon(
-                          isCorrectOption ? LucideIcons.check : LucideIcons.x,
-                          size: 18,
-                          color:
-                              isCorrectOption
-                                  ? AppColors.successColor
-                                  : AppColors.errorColor,
+                      boxShadow: [
+                        if (!isSubmitted && !isSelected)
+                          BoxShadow(
+                            color: theme.colorScheme.border.withAlpha(55),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          )
+                        else if (isSelected && !isSubmitted)
+                          BoxShadow(
+                            color: theme.colorScheme.primary.withAlpha(80),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          option,
+                          style: theme.textTheme.p.copyWith(
+                            color:
+                                isCorrectOption
+                                    ? AppColors.successColor
+                                    : isIncorrectOption
+                                    ? AppColors.errorColor
+                                    : theme.colorScheme.foreground,
+                            fontWeight:
+                                isSelected ||
+                                        isCorrectOption ||
+                                        isIncorrectOption
+                                    ? FontWeight.w500
+                                    : FontWeight.normal,
+                          ),
                         ),
-                    ],
+                        if (isSubmitted &&
+                            (isCorrectOption || isIncorrectOption))
+                          Icon(
+                            isCorrectOption ? LucideIcons.check : LucideIcons.x,
+                            size: 18,
+                            color:
+                                isCorrectOption
+                                    ? AppColors.successColor
+                                    : AppColors.errorColor,
+                          ),
+                      ],
+                    ),
                   ),
-                ),
-              );
-            }),
-          ),
+                );
+              }),
+            ),
 
-          const SizedBox(height: 8),
+            const SizedBox(height: 8),
 
-          if (isSubmitted) _buildFeedbackContainer(context),
+            if (isSubmitted) _buildFeedbackContainer(context),
 
-          const SizedBox(height: 16),
+            const SizedBox(height: 16),
 
-          ShadButton(
-            height: 44,
-            onPressed: () {
-              if (!isSubmitted) {
-                checkAnswer();
-              } else {
-                _transitionToSpeakingMode();
-              }
-            },
-            child: Text(isSubmitted ? "To Speaking Mode" : "Submit"),
-          ),
-        ],
+            ShadButton(
+              height: 44,
+              onPressed: () {
+                if (!isSubmitted) {
+                  checkAnswer();
+                } else {
+                  _transitionToSpeakingMode();
+                }
+              },
+              child: Text(isSubmitted ? "To Speaking Mode" : "Submit"),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -481,119 +491,121 @@ class _PracticeScreenState extends State<PracticeScreen>
           isTransitioning
               ? _slideInAnimation
               : const AlwaysStoppedAnimation<Offset>(Offset.zero),
-      child: Column(
-        key: const ValueKey("speaking_ui"),
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 8),
-          Text(
-            "Read aloud each part:",
-            style: theme.textTheme.p.copyWith(
-              color: theme.colorScheme.primary,
-              fontWeight: FontWeight.w500,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        child: Column(
+          key: const ValueKey("speaking_ui"),
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 8),
+            Text(
+              "Read aloud each part:",
+              style: theme.textTheme.p.copyWith(
+                color: theme.colorScheme.foreground.withAlpha(180),
+              ),
             ),
-          ),
-          const SizedBox(height: 16),
+            const SizedBox(height: 24),
 
-          Column(
-            children: List.generate(sentenceParts.length, (index) {
-              String part = sentenceParts[index];
-              bool? result = speakingResults[index.toString()];
-              bool passed = result == true;
-              bool failed = result == false;
+            Column(
+              children: List.generate(sentenceParts.length, (index) {
+                String part = sentenceParts[index];
+                bool? result = speakingResults[index.toString()];
+                bool passed = result == true;
+                bool failed = result == false;
 
-              return AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                margin: EdgeInsets.only(
-                  top: 6,
-                  bottom: 6,
-                  left: index * 2.0, // Slightly staggered layout
-                ),
-                padding: const EdgeInsets.symmetric(
-                  vertical: 12,
-                  horizontal: 16,
-                ),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  color:
-                      passed
-                          ? AppColors.successColor.withAlpha(25)
-                          : failed
-                          ? AppColors.errorColor.withAlpha(25)
-                          : theme.colorScheme.background,
-                  border: Border.all(
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  margin: EdgeInsets.only(
+                    top: 6,
+                    bottom: 6,
+                    left: index * 2.0, // Slightly staggered layout
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 12,
+                    horizontal: 16,
+                  ),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
                     color:
                         passed
-                            ? AppColors.successColor
+                            ? AppColors.successColor.withAlpha(25)
                             : failed
-                            ? AppColors.errorColor
-                            : theme.colorScheme.border,
-                    width: 1.5,
+                            ? AppColors.errorColor.withAlpha(25)
+                            : theme.colorScheme.background,
+                    border: Border.all(
+                      color:
+                          passed
+                              ? AppColors.successColor
+                              : failed
+                              ? AppColors.errorColor
+                              : theme.colorScheme.border,
+                      width: 1.5,
+                    ),
+                    boxShadow: [
+                      if (!passed && !failed)
+                        BoxShadow(
+                          color: theme.colorScheme.border.withAlpha(75),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                    ],
                   ),
-                  boxShadow: [
-                    if (!passed && !failed)
-                      BoxShadow(
-                        color: theme.colorScheme.border.withAlpha(75),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    // Sentence Part
-                    Expanded(
-                      child: Text(
-                        part,
-                        style: theme.textTheme.p.copyWith(
-                          color:
-                              passed
-                                  ? AppColors.successColor
-                                  : failed
-                                  ? AppColors.errorColor
-                                  : theme.colorScheme.foreground,
-                          fontWeight: FontWeight.w500,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Sentence Part
+                      Expanded(
+                        child: Text(
+                          part,
+                          style: theme.textTheme.p.copyWith(
+                            color:
+                                passed
+                                    ? AppColors.successColor
+                                    : failed
+                                    ? AppColors.errorColor
+                                    : theme.colorScheme.foreground,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
-                    ),
-                    SizedBox(
-                      height: 24,
-                      width: 24,
-                      child: IconButton(
-                        icon: Icon(
-                          !passed ? LucideIcons.mic : LucideIcons.circleCheck,
-                          size: 22,
-                          color:
-                              !passed
-                                  ? theme.colorScheme.foreground
-                                  : AppColors.successColor,
+                      SizedBox(
+                        height: 24,
+                        width: 24,
+                        child: IconButton(
+                          icon: Icon(
+                            !passed ? LucideIcons.mic : LucideIcons.circleCheck,
+                            size: 22,
+                            color:
+                                !passed
+                                    ? theme.colorScheme.foreground
+                                    : AppColors.successColor,
+                          ),
+                          onPressed:
+                              !passed ? () => _evaluateSpeech(index) : null,
+                          padding: EdgeInsets.zero, // Remove default padding
+                          constraints:
+                              const BoxConstraints(), // Remove default constraints
                         ),
-                        onPressed:
-                            !passed ? () => _evaluateSpeech(index) : null,
-                        padding: EdgeInsets.zero, // Remove default padding
-                        constraints:
-                            const BoxConstraints(), // Remove default constraints
                       ),
-                    ),
-                  ],
-                ),
-              );
-            }),
-          ),
+                    ],
+                  ),
+                );
+              }),
+            ),
 
-          const SizedBox(height: 16),
+            const SizedBox(height: 16),
 
-          // Finish Button
-          ShadButton(
-            height: 44,
-            onPressed: () {
-              // TODO: Handle finishing the speaking session
-            },
-            child: const Text("Finish"),
-          ),
-        ],
+            // Finish Button
+            ShadButton(
+              height: 44,
+              onPressed: () {
+                // TODO: Handle finishing the speaking session
+              },
+              child: const Text("Finish"),
+            ),
+          ],
+        ),
       ),
     );
   }
