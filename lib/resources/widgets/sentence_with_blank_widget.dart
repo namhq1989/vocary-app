@@ -24,7 +24,10 @@ class SentenceWithBlankWidget extends StatelessWidget {
       text: TextSpan(
         style: textStyle,
         children: [
-          TextSpan(text: parts[0]),
+          TextSpan(
+            text: parts[0],
+            style: TextStyle(color: ShadTheme.of(context).textTheme.p.color),
+          ),
           WidgetSpan(
             child: Container(
               width: blankWidth,
@@ -33,7 +36,10 @@ class SentenceWithBlankWidget extends StatelessWidget {
               margin: EdgeInsets.only(bottom: 4.0),
             ),
           ),
-          TextSpan(text: parts[1]),
+          TextSpan(
+            text: parts[1],
+            style: TextStyle(color: ShadTheme.of(context).textTheme.p.color),
+          ),
         ],
       ),
     );

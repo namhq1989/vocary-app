@@ -11,7 +11,8 @@ class PracticeScreen extends StatefulWidget {
   State<PracticeScreen> createState() => _PracticeScreenState();
 }
 
-class _PracticeScreenState extends State<PracticeScreen> {
+class _PracticeScreenState extends State<PracticeScreen>
+    with SingleTickerProviderStateMixin {
   int totalPoints = 120; // Example points
   int completedExercises = 3; // Example completed exercises
   int totalExercises = 5;
@@ -20,19 +21,48 @@ class _PracticeScreenState extends State<PracticeScreen> {
   final String correctAnswer = "resilient";
   final List<String> options = ["confident", "resilient", "passionate", "weak"];
 
+  Map<String, bool?> speakingResults = {};
   String? selectedAnswer;
-  bool submitted = false;
+  bool isSpeakingMode = false;
+  bool isSubmitted = false;
   bool isCorrect = false;
+  bool isTransitioning = false; // New state for transition
+
+  // Animation controller
+  late AnimationController _animationController;
+  late Animation<Offset> _slideOutAnimation;
+  late Animation<Offset> _slideInAnimation;
 
   @override
   void initState() {
     super.initState();
     NavBarSignals.isVisible.value = false;
+
+    // Initialize animation controller
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 350),
+    );
+
+    _slideOutAnimation = Tween<Offset>(
+      begin: Offset.zero,
+      end: const Offset(-1.0, 0.0),
+    ).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+
+    _slideInAnimation = Tween<Offset>(
+      begin: const Offset(1.0, 0.0),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
   }
 
   @override
   void dispose() {
     NavBarSignals.isVisible.value = true;
+    _animationController.dispose();
     super.dispose();
   }
 
@@ -72,8 +102,37 @@ class _PracticeScreenState extends State<PracticeScreen> {
 
   void checkAnswer() {
     setState(() {
-      submitted = true;
+      isSubmitted = true;
       isCorrect = selectedAnswer == correctAnswer;
+    });
+  }
+
+  void _evaluateSpeech(int index) async {
+    // Simulate speech evaluation (replace with actual TTS logic)
+    bool isCorrect = index % 2 == 0; // Placeholder logic
+
+    setState(() {
+      speakingResults[index.toString()] = isCorrect;
+    });
+  }
+
+  // Smooth transition between UI modes
+  void _transitionToSpeakingMode() {
+    setState(() {
+      isTransitioning = true;
+    });
+
+    _animationController.forward().then((_) {
+      setState(() {
+        isSpeakingMode = true;
+        isSubmitted = false;
+      });
+
+      _animationController.reset();
+
+      setState(() {
+        isTransitioning = false;
+      });
     });
   }
 
@@ -214,85 +273,26 @@ class _PracticeScreenState extends State<PracticeScreen> {
   }
 
   Widget _buildPracticeContent(BuildContext context) {
-    final theme = ShadTheme.of(context);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: 8),
-        Text('Complete the sentence:', style: theme.textTheme.p),
-        const SizedBox(height: 32),
-
-        // Sentence with blank
-        SentenceWithBlankWidget(
-          sentence: sentence,
-          wordToBlank: correctAnswer,
-          textStyle: TextStyle(fontSize: 22, height: 1.4),
-        ),
-        const SizedBox(height: 16),
-
-        // Answer Options
-        Column(
-          children:
-              options.map((option) {
-                bool isSelected = selectedAnswer == option;
-                bool isCorrectOption = submitted && option == correctAnswer;
-                bool isIncorrectOption =
-                    submitted && isSelected && option != correctAnswer;
-
-                return GestureDetector(
-                  onTap: () {
-                    if (!submitted) {
-                      setState(() => selectedAnswer = option);
-                    }
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 12,
-                        horizontal: 16,
-                      ),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: theme.colorScheme.border),
-                        borderRadius: BorderRadius.circular(12),
-                        color:
-                            isCorrectOption
-                                ? AppColors.successColor.withAlpha(25)
-                                : isSelected
-                                ? theme.colorScheme.primary.withAlpha(25)
-                                : theme.colorScheme.background,
-                      ),
-                      child: Text(
-                        option,
-                        style: theme.textTheme.p.copyWith(
-                          color:
-                              isCorrectOption
-                                  ? AppColors.successColor
-                                  : isIncorrectOption
-                                  ? AppColors.errorColor
-                                  : theme.colorScheme.foreground,
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              }).toList(),
-        ),
-
-        const SizedBox(height: 8),
-
-        // Feedback Message (Only Visible After Submitting)
-        if (submitted) _buildFeedbackContainer(context),
-
-        const SizedBox(height: 16),
-        ShadButton(
-          height: 44,
-          onPressed: submitted ? null : checkAnswer,
-          child: const Text("Submit"),
-        ),
-      ],
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 400),
+      transitionBuilder: (Widget child, Animation<double> animation) {
+        return FadeTransition(opacity: animation, child: child);
+      },
+      layoutBuilder: (Widget? currentChild, List<Widget> previousChildren) {
+        return Stack(
+          alignment: Alignment.center,
+          children: <Widget>[
+            ...previousChildren,
+            if (currentChild != null) currentChild,
+          ],
+        );
+      },
+      child:
+          isTransitioning
+              ? const SizedBox.shrink() // Empty widget during transition
+              : isSpeakingMode
+              ? _buildSpeakingUI(context)
+              : _buildWordUI(context),
     );
   }
 
@@ -312,7 +312,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Icon(
-            isCorrect ? Icons.check_circle : Icons.error,
+            isCorrect ? LucideIcons.circleCheck : LucideIcons.circleX,
             color: isCorrect ? AppColors.successColor : AppColors.errorColor,
             size: 24,
           ),
@@ -329,6 +329,269 @@ class _PracticeScreenState extends State<PracticeScreen> {
               ),
               textAlign: TextAlign.left,
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWordUI(BuildContext context) {
+    final theme = ShadTheme.of(context);
+
+    return SlideTransition(
+      position: _slideOutAnimation,
+      child: Column(
+        key: const ValueKey("word_ui"),
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 8),
+          Text('Complete the sentence:', style: theme.textTheme.p),
+          const SizedBox(height: 24),
+
+          SentenceWithBlankWidget(
+            sentence: sentence,
+            wordToBlank: correctAnswer,
+            textStyle: const TextStyle(fontSize: 22, height: 1.4),
+          ),
+          const SizedBox(height: 16),
+
+          Column(
+            children: List.generate(options.length, (index) {
+              String option = options[index];
+              bool isSelected = selectedAnswer == option;
+              bool isCorrectOption = isSubmitted && option == correctAnswer;
+              bool isIncorrectOption =
+                  isSubmitted && isSelected && option != correctAnswer;
+
+              return GestureDetector(
+                onTap: () {
+                  if (!isSubmitted) {
+                    setState(() => selectedAnswer = option);
+                  }
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
+                  margin: EdgeInsets.only(top: 6, bottom: 6, left: index * 2.0),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 12,
+                    horizontal: 16,
+                  ),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    color:
+                        isCorrectOption
+                            ? AppColors.successColor.withAlpha(25)
+                            : isIncorrectOption
+                            ? AppColors.errorColor.withAlpha(25)
+                            : theme.colorScheme.background,
+                    border: Border.all(
+                      color:
+                          isCorrectOption
+                              ? AppColors.successColor
+                              : isIncorrectOption
+                              ? AppColors.errorColor
+                              : isSelected
+                              ? theme.colorScheme.primary
+                              : theme.colorScheme.border,
+                      width: 1.5,
+                    ),
+                    boxShadow: [
+                      if (!isSubmitted && !isSelected)
+                        BoxShadow(
+                          color: theme.colorScheme.border.withOpacity(0.2),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        )
+                      else if (isSelected && !isSubmitted)
+                        BoxShadow(
+                          color: theme.colorScheme.primary.withOpacity(0.3),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        option,
+                        style: theme.textTheme.p.copyWith(
+                          color:
+                              isCorrectOption
+                                  ? AppColors.successColor
+                                  : isIncorrectOption
+                                  ? AppColors.errorColor
+                                  : theme.colorScheme.foreground,
+                          fontWeight:
+                              isSelected || isCorrectOption || isIncorrectOption
+                                  ? FontWeight.w500
+                                  : FontWeight.normal,
+                        ),
+                      ),
+                      if (isSubmitted && (isCorrectOption || isIncorrectOption))
+                        Icon(
+                          isCorrectOption ? LucideIcons.check : LucideIcons.x,
+                          size: 18,
+                          color:
+                              isCorrectOption
+                                  ? AppColors.successColor
+                                  : AppColors.errorColor,
+                        ),
+                    ],
+                  ),
+                ),
+              );
+            }),
+          ),
+
+          const SizedBox(height: 8),
+
+          if (isSubmitted) _buildFeedbackContainer(context),
+
+          const SizedBox(height: 16),
+
+          ShadButton(
+            height: 44,
+            onPressed: () {
+              if (!isSubmitted) {
+                checkAnswer();
+              } else {
+                _transitionToSpeakingMode();
+              }
+            },
+            child: Text(isSubmitted ? "To Speaking Mode" : "Submit"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSpeakingUI(BuildContext context) {
+    final theme = ShadTheme.of(context);
+    List<String> sentenceParts = [
+      "She is",
+      "very resilient",
+      "after setbacks",
+      "She is very resilient after setbacks",
+    ];
+
+    return SlideTransition(
+      position:
+          isTransitioning
+              ? _slideInAnimation
+              : const AlwaysStoppedAnimation<Offset>(Offset.zero),
+      child: Column(
+        key: const ValueKey("speaking_ui"),
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 8),
+          Text(
+            "Read aloud each part:",
+            style: theme.textTheme.p.copyWith(
+              color: theme.colorScheme.primary,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          Column(
+            children: List.generate(sentenceParts.length, (index) {
+              String part = sentenceParts[index];
+              bool? result = speakingResults[index.toString()];
+              bool passed = result == true;
+              bool failed = result == false;
+
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                margin: EdgeInsets.only(
+                  top: 6,
+                  bottom: 6,
+                  left: index * 2.0, // Slightly staggered layout
+                ),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 12,
+                  horizontal: 16,
+                ),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  color:
+                      passed
+                          ? AppColors.successColor.withAlpha(25)
+                          : failed
+                          ? AppColors.errorColor.withAlpha(25)
+                          : theme.colorScheme.background,
+                  border: Border.all(
+                    color:
+                        passed
+                            ? AppColors.successColor
+                            : failed
+                            ? AppColors.errorColor
+                            : theme.colorScheme.border,
+                    width: 1.5,
+                  ),
+                  boxShadow: [
+                    if (!passed && !failed)
+                      BoxShadow(
+                        color: theme.colorScheme.border.withAlpha(75),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Sentence Part
+                    Expanded(
+                      child: Text(
+                        part,
+                        style: theme.textTheme.p.copyWith(
+                          color:
+                              passed
+                                  ? AppColors.successColor
+                                  : failed
+                                  ? AppColors.errorColor
+                                  : theme.colorScheme.foreground,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    SizedBox(
+                      height: 24,
+                      width: 24,
+                      child: IconButton(
+                        icon: Icon(
+                          !passed ? LucideIcons.mic : LucideIcons.circleCheck,
+                          size: 22,
+                          color:
+                              !passed
+                                  ? theme.colorScheme.foreground
+                                  : AppColors.successColor,
+                        ),
+                        onPressed:
+                            !passed ? () => _evaluateSpeech(index) : null,
+                        padding: EdgeInsets.zero, // Remove default padding
+                        constraints:
+                            const BoxConstraints(), // Remove default constraints
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Finish Button
+          ShadButton(
+            height: 44,
+            onPressed: () {
+              // TODO: Handle finishing the speaking session
+            },
+            child: const Text("Finish"),
           ),
         ],
       ),
