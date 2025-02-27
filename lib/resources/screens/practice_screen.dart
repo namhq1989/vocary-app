@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:vocary/app/signals/navbar_signal.dart';
 import 'package:vocary/core/design.dart';
+import 'package:vocary/resources/widgets/practice_points_widget.dart';
 import 'package:vocary/resources/widgets/sentence_with_blank_widget.dart';
 
 class PracticeScreen extends StatefulWidget {
@@ -13,10 +14,10 @@ class PracticeScreen extends StatefulWidget {
 
 class _PracticeScreenState extends State<PracticeScreen>
     with SingleTickerProviderStateMixin {
-  int totalPoints = 120; // Example points
   int completedExercises = 3; // Example completed exercises
   int totalExercises = 5;
 
+  final Points totalPoints = Points(0);
   final String sentence = "She is very resilient after setbacks";
   final String correctAnswer = "resilient";
   final List<String> options = ["confident", "resilient", "passionate", "weak"];
@@ -41,7 +42,7 @@ class _PracticeScreenState extends State<PracticeScreen>
     // Initialize animation controller
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 350),
+      duration: const Duration(milliseconds: 500),
     );
 
     _slideOutAnimation = Tween<Offset>(
@@ -63,6 +64,7 @@ class _PracticeScreenState extends State<PracticeScreen>
   void dispose() {
     NavBarSignals.isVisible.value = true;
     _animationController.dispose();
+    totalPoints.dispose();
     super.dispose();
   }
 
@@ -133,6 +135,8 @@ class _PracticeScreenState extends State<PracticeScreen>
 
   @override
   Widget build(BuildContext context) {
+    final theme = ShadTheme.of(context);
+
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
@@ -147,9 +151,19 @@ class _PracticeScreenState extends State<PracticeScreen>
             children: [
               const SizedBox(height: 8),
               _buildCustomHeader(context),
+              const SizedBox(height: 8),
               _buildHeader(context),
               const SizedBox(height: 8),
-              const Divider(height: 1),
+              ClipRRect(
+                child: LinearProgressIndicator(
+                  value: completedExercises / totalExercises,
+                  backgroundColor: theme.colorScheme.border,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    AppColors.wordColor,
+                  ),
+                  minHeight: 1,
+                ),
+              ),
               const SizedBox(height: 64),
 
               // Scrollable Content (Answers, Feedback, Submit Button)
@@ -222,19 +236,20 @@ class _PracticeScreenState extends State<PracticeScreen>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    LucideIcons.star,
-                    color: ShadTheme.of(context).colorScheme.foreground,
-                    size: 16,
-                  ),
-                  const SizedBox(width: 6),
-                  Text("$totalPoints Points", style: theme.textTheme.p),
-                ],
-              ),
+              // Row(
+              //   crossAxisAlignment: CrossAxisAlignment.center,
+              //   mainAxisAlignment: MainAxisAlignment.center,
+              //   children: [
+              //     Icon(
+              //       LucideIcons.star,
+              //       color: ShadTheme.of(context).colorScheme.foreground,
+              //       size: 16,
+              //     ),
+              //     const SizedBox(width: 6),
+              //     Text("$totalPoints Points", style: theme.textTheme.p),
+              //   ],
+              // ),
+              totalPoints.ui(context),
 
               Text(
                 "Stage: $completedExercises/$totalExercises",
@@ -242,24 +257,39 @@ class _PracticeScreenState extends State<PracticeScreen>
               ),
             ],
           ),
-          const SizedBox(height: 8),
-
-          // Progress Bar
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: LinearProgressIndicator(
-              value: completedExercises / totalExercises,
-              backgroundColor: theme.colorScheme.border,
-              valueColor: AlwaysStoppedAnimation<Color>(
-                theme.colorScheme.primary,
-              ),
-              minHeight: 4,
-            ),
-          ),
-
-          const SizedBox(height: 8),
         ],
       ),
+    );
+  }
+
+  Widget buildPointsWidget(
+    BuildContext context,
+    int points, {
+    int? previousPoints,
+  }) {
+    final theme = ShadTheme.of(context);
+
+    // Use previous points as starting value if provided, otherwise start from current points
+    previousPoints = previousPoints ?? points;
+
+    return TweenAnimationBuilder<int>(
+      tween: IntTween(begin: previousPoints, end: points),
+      duration: Duration(milliseconds: 800),
+      builder: (BuildContext context, int animatedPoints, Widget? child) {
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              LucideIcons.star,
+              color: theme.colorScheme.foreground,
+              size: 16,
+            ),
+            const SizedBox(width: 6),
+            Text("$animatedPoints Points", style: theme.textTheme.p),
+          ],
+        );
+      },
     );
   }
 
@@ -463,6 +493,7 @@ class _PracticeScreenState extends State<PracticeScreen>
             ShadButton(
               height: 44,
               onPressed: () {
+                totalPoints.increase(10);
                 if (!isSubmitted) {
                   checkAnswer();
                 } else {
