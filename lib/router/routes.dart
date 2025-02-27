@@ -12,6 +12,7 @@ class AppRoutes {
   static const String collectionDetail = '/collection/:id';
   static const String collectionListWords = '/collection/:id/words';
   static const String wordDetail = '/word/:id';
+  static const String practice = '/practice';
 
   static String splashUrl() => '/splash';
   static String onboardingUrl() => onboarding;
@@ -24,4 +25,5 @@ class AppRoutes {
   static String collectionDetailUrl(String id) => '/collection/$id';
   static String collectionListWordsUrl(String id) => '/collection/$id/words';
   static String wordDetailUrl(String id) => '/word/$id';
+  static String practiceUrl() => '/practice';
 }

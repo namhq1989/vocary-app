@@ -23,13 +23,11 @@ class ProfileScreen extends StatelessWidget {
               gap: 20,
               actions: [
                 ShadButton.outline(
-                  width: double.infinity,
                   child: const Text('Cancel'),
                   onPressed: () => Navigator.of(context).pop(false),
                 ),
                 const SizedBox(height: 4),
                 ShadButton(
-                  width: double.infinity,
                   onPressed: () {
                     Navigator.of(context).pop(true);
                     AuthController.onTapSignOut();

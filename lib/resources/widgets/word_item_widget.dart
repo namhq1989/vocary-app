@@ -17,7 +17,7 @@ class WordItemWidget extends StatelessWidget {
             ? '${word.meaning.substring(0, 147)}...'
             : word.meaning;
 
-    bool isNotLearned = !word.mastered && word.streak == 0;
+    bool isNotLearned = !word.mastered && word.currentStreak == 0;
 
     return InkWell(
       onTap: () {
@@ -89,7 +89,7 @@ class WordItemWidget extends StatelessWidget {
             // Word Meaning
             Text(
               truncatedMeaning,
-              style: TextStyle(fontSize: 11),
+              style: TextStyle(fontSize: 12),
               maxLines: 4,
               overflow: TextOverflow.ellipsis,
             ),
@@ -102,7 +102,7 @@ class WordItemWidget extends StatelessWidget {
               _buildBadge('Not Learned', Colors.grey)
             else
               _buildBadge(
-                '${word.streak}/${word.required}',
+                '${word.currentStreak}/${word.maxStreak}',
                 AppColors.pointsColor,
               ),
           ],

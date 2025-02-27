@@ -5,8 +5,8 @@ class Word {
   final List<String> pos;
   final String level;
   final bool mastered;
-  final int streak;
-  final int required;
+  final int currentStreak;
+  final int maxStreak;
 
   Word({
     required this.word,
@@ -15,7 +15,7 @@ class Word {
     required this.pos,
     required this.level,
     this.mastered = false,
-    this.streak = 0,
-    this.required = 5,
+    this.currentStreak = 0,
+    this.maxStreak = 0,
   });
 }

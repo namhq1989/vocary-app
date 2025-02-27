@@ -7,6 +7,7 @@ import 'package:vocary/app/signals/theme_signal.dart';
 import 'package:vocary/router/router.dart';
 
 final buttonTheme = ShadButtonTheme(
+  width: double.infinity,
   decoration: ShadDecoration().copyWith(
     border: ShadBorder(radius: BorderRadius.circular(12)),
   ),
@@ -32,7 +33,7 @@ class _AppState extends State<App> {
       theme: ShadThemeData(
         textTheme: ShadTextTheme.fromGoogleFont(GoogleFonts.poppins),
         brightness: Brightness.light,
-        colorScheme: const ShadSlateColorScheme.light(),
+        colorScheme: const ShadNeutralColorScheme.light(),
         primaryButtonTheme: buttonTheme,
         destructiveButtonTheme: buttonTheme,
         outlineButtonTheme: buttonTheme,
@@ -40,7 +41,7 @@ class _AppState extends State<App> {
       darkTheme: ShadThemeData(
         textTheme: ShadTextTheme.fromGoogleFont(GoogleFonts.poppins),
         brightness: Brightness.dark,
-        colorScheme: const ShadSlateColorScheme.dark(),
+        colorScheme: const ShadNeutralColorScheme.dark(),
         primaryButtonTheme: buttonTheme,
         destructiveButtonTheme: buttonTheme,
         outlineButtonTheme: buttonTheme,

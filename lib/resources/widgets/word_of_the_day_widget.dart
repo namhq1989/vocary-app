@@ -83,7 +83,7 @@ class WordOfTheDayWidget extends StatelessWidget {
                         color: ShadTheme.of(
                           context,
                         ).colorScheme.primary.withAlpha(26),
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         'Advanced',
