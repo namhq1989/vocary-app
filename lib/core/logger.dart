@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:logger/web.dart';
 
 class Log {
@@ -30,5 +31,17 @@ class Log {
 
   static void t(dynamic message) {
     _logger.t(message);
+  }
+
+  static void p(String message, dynamic data) {
+    String prettyData;
+    try {
+      const encoder = JsonEncoder.withIndent('  ');
+      prettyData = encoder.convert(data);
+    } catch (e) {
+      prettyData = data.toString();
+    }
+
+    _logger.i("$message\n$prettyData");
   }
 }

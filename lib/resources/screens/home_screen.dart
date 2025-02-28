@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
+import 'package:signals/signals_flutter.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
+import 'package:vocary/app/controllers/home_controller.dart';
 import 'package:vocary/app/models/collection.dart';
 import 'package:vocary/app/models/daily_points.dart';
 import 'package:vocary/app/models/quote.dart';
@@ -31,6 +33,8 @@ class _HomeScreenState extends State<HomeScreen> {
       header: '',
       canShowMarker: false,
     );
+
+    HomeController.fetchRandomWords();
   }
 
   final List<Collection> collections = [
@@ -57,102 +61,6 @@ class _HomeScreenState extends State<HomeScreen> {
       description: 'Advanced words for professional use',
       icon: LucideIcons.trophy,
       totalWords: 150,
-    ),
-  ];
-
-  final List<Word> randomWords = [
-    Word(
-      word: 'Serendipity',
-      ipa: '/ˌsɛrənˈdɪpɪti/',
-      meaning:
-          'The occurrence of events by chance in a happy or beneficial way.',
-      pos: ['noun'],
-      mastered: false,
-      currentStreak: 2,
-      maxStreak: 5,
-      level: 'Advanced',
-    ),
-    Word(
-      word: 'Ubiquitous',
-      ipa: '/juːˈbɪkwɪtəs/',
-      meaning: 'Present, appearing, or found everywhere.',
-      pos: ['adjective'],
-      mastered: true,
-      level: 'Advanced',
-    ),
-    Word(
-      word: 'Ephemeral',
-      ipa: '/ɪˈfɛmərəl/',
-      meaning: 'Lasting for a very short time.',
-      pos: ['adjective'],
-      mastered: false,
-      currentStreak: 0,
-      maxStreak: 5,
-      level: 'Advanced',
-    ),
-    Word(
-      word: 'Resilient',
-      ipa: '/rɪˈzɪl.jənt/',
-      meaning: 'Able to recover quickly from difficulties.',
-      pos: ['adjective'],
-      mastered: true,
-      level: 'Intermediate',
-    ),
-    Word(
-      word: 'Eloquent',
-      ipa: '/ˈɛləkwənt/',
-      meaning: 'Fluent or persuasive in speaking or writing.',
-      pos: ['adjective'],
-      mastered: false,
-      currentStreak: 1,
-      maxStreak: 5,
-      level: 'Intermediate',
-    ),
-    Word(
-      word: 'Pragmatic',
-      ipa: '/præɡˈmætɪk/',
-      meaning: 'Dealing with things sensibly and realistically.',
-      pos: ['adjective'],
-      mastered: true,
-      level: 'Intermediate',
-    ),
-    Word(
-      word: 'Obsolete',
-      ipa: '/ˈɒbsəliːt/',
-      meaning: 'No longer produced or used; out of date.',
-      pos: ['adjective'],
-      mastered: false,
-      currentStreak: 0,
-      maxStreak: 5,
-      level: 'Advanced',
-    ),
-    Word(
-      word: 'Benevolent',
-      ipa: '/bəˈnɛvələnt/',
-      meaning: 'Well-meaning and kindly.',
-      pos: ['adjective'],
-      mastered: true,
-      level: 'Advanced',
-    ),
-    Word(
-      word: 'Cacophony',
-      ipa: '/kəˈkɒfəni/',
-      meaning: 'A harsh, discordant mixture of sounds.',
-      pos: ['noun'],
-      mastered: false,
-      currentStreak: 0,
-      maxStreak: 5,
-      level: 'Advanced',
-    ),
-    Word(
-      word: 'Altruistic',
-      ipa: '/ˌæltruˈɪstɪk/',
-      meaning: 'Showing selfless concern for the well-being of others.',
-      pos: ['adjective'],
-      mastered: false,
-      currentStreak: 2,
-      maxStreak: 5,
-      level: 'Advanced',
     ),
   ];
 
@@ -456,47 +364,56 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildRandomWordsSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Text(
-            'Random Words',
-            style: ShadTheme.of(context).textTheme.h3,
+    return Watch((context) {
+      final isFetching = HomeController.isFetchingRandomWords.value;
+      final randomWords = HomeController.randomWords.value;
+
+      if (isFetching) {
+        return const Center(child: CircularProgressIndicator());
+      }
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Text(
+              'Random Words',
+              style: ShadTheme.of(context).textTheme.h3,
+            ),
           ),
-        ),
-        const SizedBox(height: 16),
-        SizedBox(
-          height: 210,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: randomWords.length.clamp(0, 10),
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16,
-            ), // Ensures padding
-            itemBuilder: (context, index) {
-              return Padding(
-                padding: EdgeInsets.only(
-                  left:
-                      index == 0
-                          ? 0
-                          : 8, // First item meets left edge, others have 8px gap
-                  right:
-                      index == randomWords.length - 1
-                          ? 0
-                          : 8, // Last item meets right edge
-                ),
-                child: SizedBox(
-                  width: 160, // Adjust width for a single word card
-                  child: WordItemWidget(word: randomWords[index]),
-                ),
-              );
-            },
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 210,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: randomWords.length.clamp(0, 10),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16,
+              ), // Ensures padding
+              itemBuilder: (context, index) {
+                return Padding(
+                  padding: EdgeInsets.only(
+                    left:
+                        index == 0
+                            ? 0
+                            : 8, // First item meets left edge, others have 8px gap
+                    right:
+                        index == randomWords.length - 1
+                            ? 0
+                            : 8, // Last item meets right edge
+                  ),
+                  child: SizedBox(
+                    width: 160, // Adjust width for a single word card
+                    child: WordItemWidget(wordId: randomWords[index].id),
+                  ),
+                );
+              },
+            ),
           ),
-        ),
-      ],
-    );
+        ],
+      );
+    });
   }
 
   String _getDayName(DateTime date) {

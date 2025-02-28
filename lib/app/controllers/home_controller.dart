@@ -1,8 +1,8 @@
-import 'package:flutter/material.dart';
+import 'package:signals/signals_flutter.dart';
 import 'package:vocary/app/models/word.dart';
-import 'package:vocary/resources/widgets/word_item_widget.dart';
+import 'package:vocary/app/signals/word_store_signal.dart';
 
-final List<Word> wordsList = [
+final List<Word> _dummyWords = [
   Word(
     id: '1',
     word: 'Serendipity',
@@ -87,39 +87,15 @@ final List<Word> wordsList = [
   ),
 ];
 
-class CollectionListWordsScreen extends StatelessWidget {
-  final String collectionId;
+class HomeController {
+  static final randomWords = signal<List<Word>>([]);
+  static final isFetchingRandomWords = signal<bool>(false);
 
-  const CollectionListWordsScreen({super.key, required this.collectionId});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Collection List Words")),
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: GridView.builder(
-                padding: const EdgeInsets.all(16),
-                shrinkWrap: true,
-                physics: const BouncingScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 8,
-                  crossAxisSpacing: 8,
-                  mainAxisExtent: 210,
-                ),
-                itemCount: wordsList.length.clamp(0, 10),
-                itemBuilder: (context, index) {
-                  return WordItemWidget(wordId: wordsList[index].id);
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+  static Future<void> fetchRandomWords() async {
+    isFetchingRandomWords.value = true;
+    await Future.delayed(const Duration(seconds: 2));
+    randomWords.value = _dummyWords;
+    WordStoreSignals.addWords(_dummyWords);
+    isFetchingRandomWords.value = false;
   }
 }

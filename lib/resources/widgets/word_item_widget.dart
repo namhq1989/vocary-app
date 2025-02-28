@@ -1,27 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
-import 'package:vocary/app/models/word.dart';
+import 'package:vocary/app/signals/word_store_signal.dart';
 import 'package:vocary/core/design.dart';
 import 'package:vocary/router/routes.dart';
 
 class WordItemWidget extends StatelessWidget {
-  final Word word;
+  final String wordId;
 
-  const WordItemWidget({super.key, required this.word});
+  const WordItemWidget({super.key, required this.wordId});
 
   @override
   Widget build(BuildContext context) {
-    String truncatedMeaning =
-        word.meaning.length > 150
-            ? '${word.meaning.substring(0, 147)}...'
-            : word.meaning;
+    final word = WordStoreSignals.getWord(wordId);
+    if (word == null) return const SizedBox.shrink();
 
-    bool isNotLearned = !word.mastered && word.currentStreak == 0;
+    final meaning = word.definitions[0];
+    String truncatedMeaning =
+        meaning.length > 150 ? '${meaning.substring(0, 147)}...' : meaning;
+
+    bool isNotLearned = !word.isMastered && word.currentStreak == 0;
 
     return InkWell(
       onTap: () {
-        context.push(AppRoutes.wordDetailUrl('123'));
+        context.push(AppRoutes.wordDetailUrl(wordId));
       },
       child: Container(
         padding: const EdgeInsets.all(12),
@@ -96,13 +98,13 @@ class WordItemWidget extends StatelessWidget {
             const Spacer(),
 
             // Badges (Mastered / Not Learned / Progress)
-            if (word.mastered)
+            if (word.isMastered)
               _buildBadge('Mastered', AppColors.masteredColor)
             else if (isNotLearned)
               _buildBadge('Not Learned', Colors.grey)
             else
               _buildBadge(
-                '${word.currentStreak}/${word.maxStreak}',
+                '${word.currentStreak}/${word.masteryThreshold}',
                 AppColors.pointsColor,
               ),
           ],

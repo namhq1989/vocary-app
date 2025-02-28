@@ -1,70 +1,92 @@
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:vocary/app/models/word.dart';
+import 'package:vocary/app/signals/word_store_signal.dart';
 import 'package:vocary/core/design.dart';
 import 'package:vocary/resources/widgets/word_item_widget.dart';
 
-final word = Word(
-  word: 'Dart',
-  ipa: '/dɑrt/',
-  meaning:
-      'A client-optimized programming language for fast apps on any platform. Developed by Google for building mobile, desktop, server, and web applications.',
-  pos: ['noun'],
-  mastered: true,
-  currentStreak: 5,
-  maxStreak: 5,
-  level: 'Advanced',
-);
-
 final otherWords = [
   Word(
-    word: 'Mobile',
-    ipa: '/ˈmoʊbəl/',
-    meaning:
-        'Capable of moving or being moved freely or easily. In computing, refers to portable devices like smartphones and tablets.',
-    pos: ['adjective', 'noun'],
-    mastered: true,
-    level: 'Intermediate',
-  ),
-  Word(
-    word: 'Flutter',
-    ipa: '/ˈflʌtər/',
-    meaning:
-        'A popular open-source framework by Google for building beautiful, natively compiled applications for mobile, web, and desktop.',
-    pos: ['noun', 'verb'],
-    mastered: true,
-    level: 'Advanced',
-  ),
-  Word(
-    word: 'Dart',
-    ipa: '/dɑrt/',
-    meaning:
-        'A client-optimized programming language for fast apps on any platform. Developed by Google for building mobile, desktop, server, and web applications.',
+    id: '1',
+    word: 'Serendipity',
+    ipa: '/ˌsɛrənˈdɪpɪti/',
+    definitions: [
+      'The occurrence of events by chance in a happy or beneficial way.',
+    ],
     pos: ['noun'],
-    mastered: false,
+    audioUrl: '',
+    level: 'Advanced',
+    synonyms: ['fluke', 'fortune'],
+    antonyms: ['misfortune'],
+    examples: [],
+    isFavorite: false,
+    isMastered: false,
+    currentStreak: 2,
+    masteryThreshold: 5,
+  ),
+  Word(
+    id: '2',
+    word: 'Ubiquitous',
+    ipa: '/juːˈbɪkwɪtəs/',
+    definitions: ['Present, appearing, or found everywhere.'],
+    pos: ['adjective'],
+    audioUrl: '',
+    level: 'Advanced',
+    synonyms: ['omnipresent', 'pervasive'],
+    antonyms: ['rare'],
+    examples: [],
+    isFavorite: false,
+    isMastered: true,
     currentStreak: 3,
-    maxStreak: 5,
+    masteryThreshold: 5,
+  ),
+  Word(
+    id: '3',
+    word: 'Ephemeral',
+    ipa: '/ɪˈfɛmərəl/',
+    definitions: ['Lasting for a very short time.'],
+    pos: ['adjective'],
+    audioUrl: '',
     level: 'Advanced',
+    synonyms: ['transitory', 'fleeting'],
+    antonyms: ['permanent'],
+    examples: [],
+    isFavorite: false,
+    isMastered: false,
+    currentStreak: 0,
+    masteryThreshold: 5,
   ),
   Word(
-    word: 'App',
-    ipa: '/æp/',
-    meaning:
-        'A self-contained program or piece of software designed to fulfill a particular purpose; an application, especially as downloaded by a user.',
-    pos: ['noun'],
-    mastered: false,
-    currentStreak: 4,
-    maxStreak: 5,
-    level: 'Beginner',
-  ),
-  Word(
-    word: 'Code',
-    ipa: '/koʊd/',
-    meaning:
-        'Instructions written in a programming language that can be executed by a computer to perform specific tasks and create software.',
-    pos: ['noun'],
-    mastered: true,
+    id: '4',
+    word: 'Resilient',
+    ipa: '/rɪˈzɪl.jənt/',
+    definitions: ['Able to recover quickly from difficulties.'],
+    pos: ['adjective'],
+    audioUrl: '',
     level: 'Intermediate',
+    synonyms: ['strong', 'tough'],
+    antonyms: ['fragile'],
+    examples: [],
+    isFavorite: false,
+    isMastered: true,
+    currentStreak: 5,
+    masteryThreshold: 5,
+  ),
+  Word(
+    id: '5',
+    word: 'Eloquent',
+    ipa: '/ˈɛləkwənt/',
+    definitions: ['Fluent or persuasive in speaking or writing.'],
+    pos: ['adjective'],
+    audioUrl: '',
+    level: 'Intermediate',
+    synonyms: ['expressive', 'articulate'],
+    antonyms: ['inarticulate'],
+    examples: [],
+    isFavorite: false,
+    isMastered: false,
+    currentStreak: 1,
+    masteryThreshold: 5,
   ),
 ];
 
@@ -75,6 +97,11 @@ class WordDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final word = WordStoreSignals.getWord(wordId);
+    if (word == null) {
+      return const Scaffold(body: Center(child: Text('Word not found')));
+    }
+
     return Scaffold(
       appBar: AppBar(title: Text(word.word)),
       body: SafeArea(
@@ -105,7 +132,7 @@ class WordDetailScreen extends StatelessWidget {
           children: [
             Text(word.word, style: ShadTheme.of(context).textTheme.h2),
             const SizedBox(width: 8),
-            if (word.mastered)
+            if (word.isMastered)
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
@@ -155,7 +182,7 @@ class WordDetailScreen extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 8),
-        Text(word.meaning, style: ShadTheme.of(context).textTheme.p),
+        Text(word.definitions[0], style: ShadTheme.of(context).textTheme.p),
       ],
     );
   }
@@ -249,7 +276,7 @@ class WordDetailScreen extends StatelessWidget {
           ),
           itemCount: otherWords.length.clamp(0, 10), // Using unlearned words
           itemBuilder: (context, index) {
-            return WordItemWidget(word: otherWords[index]);
+            return WordItemWidget(wordId: otherWords[index].id);
           },
         ),
       ],
