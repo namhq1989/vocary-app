@@ -6,34 +6,15 @@ class Points {
   int? _previousPoints;
   final ValueNotifier<int> _pointsNotifier;
 
-  /// Creates a Points object with initial value
+  /// Creates a Points object with an initial value.
   Points(int initialPoints)
     : _currentPoints = initialPoints,
       _pointsNotifier = ValueNotifier(initialPoints);
 
-  /// Get the current points value
+  /// Gets the current points value.
   int get value => _currentPoints;
 
-  /// Increase points by the specified amount
-  void increase(int amount) {
-    if (amount <= 0) return;
-
-    _previousPoints = _currentPoints;
-    _currentPoints += amount;
-    _pointsNotifier.value = _currentPoints;
-  }
-
-  /// Decrease points by the specified amount
-  void decrease(int amount) {
-    if (amount <= 0) return;
-
-    _previousPoints = _currentPoints;
-    _currentPoints =
-        (_currentPoints - amount).clamp(0, double.infinity).toInt();
-    _pointsNotifier.value = _currentPoints;
-  }
-
-  /// Set points to a specific value
+  /// Updates the points value while saving the previous one.
   void set(int newPoints) {
     if (newPoints < 0 || newPoints == _currentPoints) return;
 
@@ -42,42 +23,39 @@ class Points {
     _pointsNotifier.value = _currentPoints;
   }
 
-  /// Returns a widget that displays the points with animation
-  Widget ui(BuildContext context) {
-    return ValueListenableBuilder<int>(
-      valueListenable: _pointsNotifier,
-      builder: (context, points, _) {
-        return _PointsWidget(points: points, previousPoints: _previousPoints);
-      },
-    );
-  }
-
-  /// Dispose the notifier when no longer needed
+  /// Disposes the notifier when it's no longer needed.
   void dispose() {
     _pointsNotifier.dispose();
   }
+
+  /// **Displays the points with animation**
+  Widget show(BuildContext context) {
+    return ValueListenableBuilder<int>(
+      valueListenable: _pointsNotifier,
+      builder: (context, points, _) {
+        return _AnimatedPointsWidget(
+          points: points,
+          previousPoints: _previousPoints,
+        );
+      },
+    );
+  }
 }
 
-class _PointsWidget extends StatefulWidget {
+class _AnimatedPointsWidget extends StatelessWidget {
   final int points;
   final int? previousPoints;
 
-  const _PointsWidget({required this.points, this.previousPoints});
+  const _AnimatedPointsWidget({required this.points, this.previousPoints});
 
-  @override
-  State<_PointsWidget> createState() => _PointsWidgetState();
-}
-
-class _PointsWidgetState extends State<_PointsWidget> {
   @override
   Widget build(BuildContext context) {
-    if (widget.previousPoints == null ||
-        widget.previousPoints == widget.points) {
-      return _buildPointsRow(context, widget.points);
+    if (previousPoints == null || previousPoints == points) {
+      return _buildPointsRow(context, points);
     }
 
     return TweenAnimationBuilder<int>(
-      tween: IntTween(begin: widget.previousPoints!, end: widget.points),
+      tween: IntTween(begin: previousPoints!, end: points),
       duration: const Duration(milliseconds: 500),
       builder: (context, animatedPoints, _) {
         return _buildPointsRow(context, animatedPoints);

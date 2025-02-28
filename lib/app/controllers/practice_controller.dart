@@ -3,7 +3,9 @@ import 'dart:math';
 import 'package:signals/signals_core.dart';
 import 'package:vocary/app/models/exercise.dart';
 import 'package:vocary/app/models/practice_config.dart';
+import 'package:vocary/app/models/practice_fill_phase.dart';
 import 'package:vocary/app/models/practice_session.dart';
+import 'package:vocary/app/models/practice_speak_phase.dart';
 import 'package:vocary/app/models/word.dart';
 
 String randomId() => DateTime.now().millisecondsSinceEpoch.toString();
@@ -16,16 +18,34 @@ List<Exercise> _generateRandomExercises(int count) {
     String sentence = "This is an example sentence with ${randomWord.word}.";
     String blankWord = randomWord.word;
     List<String> options = _generateOptions(blankWord);
+    List<String> parts = ["Fill in", "the blank", "with the correct word"];
 
+    List<PracticeSpeakingPart> speakingParts = [];
+    for (var p in parts) {
+      speakingParts.add(PracticeSpeakingPart(content: p));
+    }
+
+    final exerciseId = randomId();
     exercises.add(
       Exercise(
-        id: randomId(),
+        id: exerciseId,
         word: randomWord,
         sentence: sentence,
         blankWord: blankWord,
         audioUrl: "",
         options: options,
-        parts: ["Fill in", "the blank", "with the correct word"],
+        parts: parts,
+        fillPhase: PracticeFillPhase(
+          exerciseId: exerciseId,
+          sentence: sentence,
+          blankWord: blankWord,
+          options: options,
+        ),
+        speakPhase: PracticeSpeakPhase(
+          exerciseId: exerciseId,
+          sentence: sentence,
+          parts: speakingParts,
+        ),
       ),
     );
   }
@@ -71,7 +91,7 @@ class PracticeController {
     isFetchingExercises.value = true;
 
     // Simulated API delay
-    await Future.delayed(Duration(seconds: 2));
+    await Future.delayed(Duration(seconds: 1));
 
     List<Exercise> generatedExercises = _generateRandomExercises(
       config.wordCount,
@@ -81,5 +101,27 @@ class PracticeController {
     isFetchingExercises.value = false;
   }
 
-  Future<void> submitExercise(Exercise exercise) async {}
+  void updateCurrentExercise(Exercise exercise) {
+    final exercises =
+        session.value!.exercises
+            .map((e) => e.id == exercise.id ? exercise : e)
+            .toList();
+    session.value?.updateExercises(exercises);
+  }
+
+  void submitFillPhaseAnswer(String answer) {
+    final exercise = session.value!.currentExercise;
+    if (exercise == null) return;
+
+    final updatedExercise = exercise.evaluateFillPhaseAnswer(answer);
+    updateCurrentExercise(updatedExercise);
+  }
+
+  void toSpeakPhase() {
+    final exercise = session.value!.currentExercise;
+    if (exercise == null) return;
+
+    final updatedExercise = exercise.toSpeakPhase();
+    updateCurrentExercise(updatedExercise);
+  }
 }

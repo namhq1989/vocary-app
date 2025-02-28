@@ -44,19 +44,29 @@ class Exercise {
     return fillPhase!.pointsEarned + speakPhase!.totalPoints;
   }
 
+  bool get isSpeakPhase => currentPhase == ExercisePhase.speak;
+
   void start() {
     startedAt = DateTime.now();
     currentPhase = ExercisePhase.fill;
   }
 
-  void toSpeakPhase() {
+  Exercise toSpeakPhase() {
     currentPhase = ExercisePhase.speak;
+    return this;
   }
 
   void complete() {
     isCompleted = true;
     completedAt = DateTime.now();
     timeSpent = completedAt!.difference(startedAt!);
+  }
+
+  Exercise evaluateFillPhaseAnswer(String answer) {
+    if (fillPhase == null) return this;
+
+    fillPhase = fillPhase?.evaluateResult(answer);
+    return this;
   }
 
   factory Exercise.fromJson(Map<String, dynamic> json) {
@@ -88,5 +98,22 @@ class Exercise {
     );
 
     return e;
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      "id": id,
+      "word": word.toJson(),
+      "audioUrl": audioUrl,
+      "sentence": sentence,
+      "blankWord": blankWord,
+      "options": options,
+      "parts": parts,
+      "currentPhase": currentPhase,
+      "isCompleted": isCompleted,
+      "startedAt": startedAt?.toIso8601String(),
+      "completedAt": completedAt?.toIso8601String(),
+      "timeSpent": timeSpent.toString(),
+    };
   }
 }

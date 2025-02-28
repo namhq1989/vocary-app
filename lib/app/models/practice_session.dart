@@ -1,7 +1,7 @@
 import 'package:vocary/app/models/exercise.dart';
 
 class PracticeSession {
-  final List<Exercise> exercises;
+  List<Exercise> exercises;
   int currentExerciseIndex;
   bool isCompleted;
 
@@ -36,6 +36,9 @@ class PracticeSession {
 
   bool get hasNextExercise => currentExerciseIndex < exercises.length - 1;
 
+  void updateExercises(List<Exercise> updatedExercises) =>
+      exercises = updatedExercises;
+
   void toNextExercise() {
     if (!hasNextExercise) {
       complete();
@@ -47,5 +50,13 @@ class PracticeSession {
 
   void complete() {
     isCompleted = true;
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      "exercises": exercises.map((e) => e.toJson()).toList(),
+      "currentExerciseIndex": currentExerciseIndex,
+      "isCompleted": isCompleted,
+    };
   }
 }

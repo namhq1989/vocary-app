@@ -16,7 +16,7 @@ class PracticeFillPhase {
     required this.blankWord,
     required this.options,
 
-    this.userAnswer = '',
+    this.userAnswer = "",
     this.isCorrect = false,
     this.attempts = 0,
     this.isSubmitted = false,
@@ -26,11 +26,11 @@ class PracticeFillPhase {
   final int _correctPoints = 10;
 
   PracticeFillPhase evaluateResult(String answer) {
-    if (isCorrect == true) return copyWith();
+    if (isCorrect == true) return this;
 
+    userAnswer = answer;
     isSubmitted = true;
     attempts++;
-    userAnswer = answer;
 
     isCorrect = answer.trim().toLowerCase() == blankWord.trim().toLowerCase();
 
@@ -38,34 +38,6 @@ class PracticeFillPhase {
       pointsEarned = _correctPoints;
     }
 
-    return copyWith(
-      isSubmitted: isSubmitted,
-      attempts: attempts,
-      userAnswer: userAnswer,
-      isCorrect: isCorrect,
-      pointsEarned: pointsEarned,
-    );
+    return this;
   }
-
-  PracticeFillPhase copyWith({
-    String? exerciseId,
-    String? sentence,
-    String? blankWord,
-    List<String>? options,
-    String? userAnswer,
-    bool? isSubmitted,
-    bool? isCorrect,
-    int? attempts,
-    int? pointsEarned,
-  }) => PracticeFillPhase(
-    exerciseId: exerciseId ?? this.exerciseId,
-    sentence: sentence ?? this.sentence,
-    blankWord: blankWord ?? this.blankWord,
-    options: options ?? this.options,
-    userAnswer: userAnswer ?? this.userAnswer,
-    isSubmitted: isSubmitted ?? this.isSubmitted,
-    isCorrect: isCorrect ?? this.isCorrect,
-    attempts: attempts ?? this.attempts,
-    pointsEarned: pointsEarned ?? this.pointsEarned,
-  );
 }
