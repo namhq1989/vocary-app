@@ -23,7 +23,7 @@ class PracticeFillPhase {
     this.pointsEarned = 0,
   });
 
-  final int _correctPoints = 10;
+  int get correctPoints => 10;
 
   PracticeFillPhase evaluateResult(String answer) {
     if (isCorrect == true) return this;
@@ -34,8 +34,10 @@ class PracticeFillPhase {
 
     isCorrect = answer.trim().toLowerCase() == blankWord.trim().toLowerCase();
 
+    pointsEarned = 0;
+
     if (isCorrect) {
-      pointsEarned = _correctPoints;
+      pointsEarned = correctPoints;
     }
 
     return this;

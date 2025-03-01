@@ -25,7 +25,7 @@ List<Exercise> _generateRandomExercises(int count) {
       speakingParts.add(PracticeSpeakingPart(content: p));
     }
 
-    final exerciseId = randomId();
+    final exerciseId = "ex_${i}_${randomId()}";
     exercises.add(
       Exercise(
         id: exerciseId,
@@ -99,14 +99,26 @@ class PracticeController {
 
     session.value = PracticeSession.init(generatedExercises);
     isFetchingExercises.value = false;
+
+    startExercise();
   }
 
   void updateCurrentExercise(Exercise exercise) {
-    final exercises =
+    final updatedExercises =
         session.value!.exercises
             .map((e) => e.id == exercise.id ? exercise : e)
             .toList();
-    session.value?.updateExercises(exercises);
+    session.value?.updateExercises(updatedExercises);
+
+    session.set(session.value, force: true);
+  }
+
+  void startExercise() {
+    final exercise = session.value!.currentExercise;
+    if (exercise == null) return;
+
+    final updatedExercise = exercise.start();
+    updateCurrentExercise(updatedExercise);
   }
 
   void submitFillPhaseAnswer(String answer) {
@@ -117,11 +129,44 @@ class PracticeController {
     updateCurrentExercise(updatedExercise);
   }
 
+  void submitSpeakPhasePart(int partIndex, double confidence) {
+    final exercise = session.value!.currentExercise;
+    if (exercise == null) return;
+
+    final updatedExercise = exercise.evaluateSpeakPhasePart(
+      partIndex,
+      confidence,
+    );
+    updateCurrentExercise(updatedExercise);
+  }
+
   void toSpeakPhase() {
     final exercise = session.value!.currentExercise;
     if (exercise == null) return;
 
     final updatedExercise = exercise.toSpeakPhase();
     updateCurrentExercise(updatedExercise);
+  }
+
+  void toNextExercise() {
+    final hasNextExercise = session.value!.hasNextExercise;
+    if (!hasNextExercise) {
+      return;
+    }
+
+    final exercise = session.value!.currentExercise;
+    if (exercise == null) {
+      return;
+    }
+
+    // Mark the current exercise as completed
+    final updatedExercise = exercise.complete();
+    updateCurrentExercise(updatedExercise);
+
+    // Move to the next exercise
+    session.value!.toNextExercise();
+
+    // Start the next exercise with a fresh state
+    startExercise();
   }
 }

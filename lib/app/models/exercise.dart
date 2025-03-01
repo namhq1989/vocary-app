@@ -39,34 +39,61 @@ class Exercise {
   });
 
   int get totalPoints {
-    if (fillPhase == null || speakPhase == null) return 0;
+    int total = 0;
 
-    return fillPhase!.pointsEarned + speakPhase!.totalPoints;
+    // Fill Phase points
+    if (fillPhase != null && fillPhase!.isSubmitted) {
+      total += fillPhase!.pointsEarned;
+    }
+
+    // Speak Phase points
+    if (speakPhase != null && isSpeakPhase) {
+      for (var part in speakPhase!.parts) {
+        if (part.isSubmitted && part.isCorrect) {
+          total += 10;
+        }
+      }
+    }
+
+    return total;
   }
 
   bool get isSpeakPhase => currentPhase == ExercisePhase.speak;
 
-  void start() {
-    startedAt = DateTime.now();
-    currentPhase = ExercisePhase.fill;
+  Exercise start() {
+    return copyWith(
+      startedAt: DateTime.now(),
+      currentPhase: ExercisePhase.fill,
+    );
   }
 
   Exercise toSpeakPhase() {
-    currentPhase = ExercisePhase.speak;
-    return this;
+    return copyWith(currentPhase: ExercisePhase.speak);
   }
 
-  void complete() {
-    isCompleted = true;
+  Exercise complete() {
     completedAt = DateTime.now();
     timeSpent = completedAt!.difference(startedAt!);
+
+    return copyWith(
+      isCompleted: true,
+      completedAt: completedAt,
+      timeSpent: timeSpent,
+    );
   }
 
   Exercise evaluateFillPhaseAnswer(String answer) {
-    if (fillPhase == null) return this;
+    if (fillPhase == null) return copyWith();
 
     fillPhase = fillPhase?.evaluateResult(answer);
-    return this;
+    return copyWith(fillPhase: fillPhase);
+  }
+
+  Exercise evaluateSpeakPhasePart(int partIndex, double confidence) {
+    if (speakPhase == null) return copyWith();
+
+    speakPhase = speakPhase?.evaluatePartConfidence(partIndex, confidence);
+    return copyWith(speakPhase: speakPhase);
   }
 
   factory Exercise.fromJson(Map<String, dynamic> json) {
@@ -115,5 +142,39 @@ class Exercise {
       "completedAt": completedAt?.toIso8601String(),
       "timeSpent": timeSpent.toString(),
     };
+  }
+
+  Exercise copyWith({
+    String? id,
+    Word? word,
+    String? audioUrl,
+    String? sentence,
+    String? blankWord,
+    List<String>? options,
+    List<String>? parts,
+    bool? isCompleted,
+    ExercisePhase? currentPhase,
+    PracticeFillPhase? fillPhase,
+    PracticeSpeakPhase? speakPhase,
+    DateTime? startedAt,
+    DateTime? completedAt,
+    Duration? timeSpent,
+  }) {
+    return Exercise(
+      id: id ?? this.id,
+      word: word ?? this.word,
+      audioUrl: audioUrl ?? this.audioUrl,
+      sentence: sentence ?? this.sentence,
+      blankWord: blankWord ?? this.blankWord,
+      options: options ?? this.options,
+      parts: parts ?? this.parts,
+      isCompleted: isCompleted ?? this.isCompleted,
+      currentPhase: currentPhase ?? this.currentPhase,
+      fillPhase: fillPhase ?? this.fillPhase,
+      speakPhase: speakPhase ?? this.speakPhase,
+      startedAt: startedAt ?? this.startedAt,
+      completedAt: completedAt ?? this.completedAt,
+      timeSpent: timeSpent ?? this.timeSpent,
+    );
   }
 }

@@ -2,16 +2,36 @@ class PracticeSpeakPhase {
   final String exerciseId;
   final String sentence;
   final List<PracticeSpeakingPart> parts;
-  int currentPart;
 
   PracticeSpeakPhase({
     required this.exerciseId,
     required this.sentence,
     required this.parts,
-    this.currentPart = 0,
   });
 
   int get totalPoints => parts.fold(0, (sum, part) => sum + part.pointsEarned);
+
+  PracticeSpeakPhase evaluatePartConfidence(int partIndex, double confidence) {
+    if (partIndex < 0 || partIndex >= parts.length) return copyWith();
+
+    PracticeSpeakingPart part = parts[partIndex];
+    if (part.isCorrect) return copyWith();
+
+    parts[partIndex] = part.evaluateSpeech(confidence);
+    return copyWith(parts: parts);
+  }
+
+  PracticeSpeakPhase copyWith({
+    String? exerciseId,
+    String? sentence,
+    List<PracticeSpeakingPart>? parts,
+  }) {
+    return PracticeSpeakPhase(
+      exerciseId: exerciseId ?? this.exerciseId,
+      sentence: sentence ?? this.sentence,
+      parts: parts ?? this.parts,
+    );
+  }
 }
 
 class PracticeSpeakingPart {
@@ -30,7 +50,7 @@ class PracticeSpeakingPart {
     this.pointsEarned = 0,
   });
 
-  final int _correctPoints = 10;
+  int get correctPoints => 10;
   final double _confidenceThreshold = 0.8;
 
   PracticeSpeakingPart evaluateSpeech(double confidence) {
@@ -42,28 +62,30 @@ class PracticeSpeakingPart {
     // if the actual confidence is below the threshold, consider it incorrect
     isCorrect = confidence >= _confidenceThreshold;
     if (isCorrect) {
-      pointsEarned = _correctPoints;
+      pointsEarned = correctPoints;
     }
 
     return copyWith(
-      isSubmitted: isSubmitted,
-      attempts: attempts,
+      isSubmitted: true,
       isCorrect: isCorrect,
+      attempts: attempts,
       pointsEarned: pointsEarned,
     );
   }
 
-  copyWith({
+  PracticeSpeakingPart copyWith({
     String? content,
     bool? isSubmitted,
     bool? isCorrect,
     int? attempts,
     int? pointsEarned,
-  }) => PracticeSpeakingPart(
-    content: content ?? this.content,
-    isSubmitted: isSubmitted ?? this.isSubmitted,
-    isCorrect: isCorrect ?? this.isCorrect,
-    attempts: attempts ?? this.attempts,
-    pointsEarned: pointsEarned ?? this.pointsEarned,
-  );
+  }) {
+    return PracticeSpeakingPart(
+      content: content ?? this.content,
+      isSubmitted: isSubmitted ?? this.isSubmitted,
+      isCorrect: isCorrect ?? this.isCorrect,
+      attempts: attempts ?? this.attempts,
+      pointsEarned: pointsEarned ?? this.pointsEarned,
+    );
+  }
 }

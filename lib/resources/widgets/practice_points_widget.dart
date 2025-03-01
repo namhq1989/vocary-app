@@ -56,7 +56,7 @@ class _AnimatedPointsWidget extends StatelessWidget {
 
     return TweenAnimationBuilder<int>(
       tween: IntTween(begin: previousPoints!, end: points),
-      duration: const Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 400),
       builder: (context, animatedPoints, _) {
         return _buildPointsRow(context, animatedPoints);
       },

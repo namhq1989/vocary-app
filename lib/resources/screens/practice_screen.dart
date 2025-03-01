@@ -4,7 +4,6 @@ import 'package:signals/signals_flutter.dart';
 import 'package:vocary/app/controllers/practice_controller.dart';
 import 'package:vocary/app/models/exercise.dart';
 import 'package:vocary/app/models/practice_config.dart';
-import 'package:vocary/app/models/practice_fill_phase.dart';
 import 'package:vocary/app/models/practice_session.dart';
 import 'package:vocary/app/models/practice_speak_phase.dart';
 import 'package:vocary/app/signals/navbar_signal.dart';
@@ -61,6 +60,14 @@ class _PracticeScreenState extends State<PracticeScreen>
     ).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
+  }
+
+  @override
+  void didUpdateWidget(PracticeScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    totalPoints.dispose();
+    totalPoints = Points(0);
   }
 
   @override
@@ -170,7 +177,7 @@ class _PracticeScreenState extends State<PracticeScreen>
                 const SizedBox(height: 8),
                 ClipRRect(
                   child: LinearProgressIndicator(
-                    value: session.completionPercentage,
+                    value: session.completionRatio,
                     backgroundColor: theme.colorScheme.border,
                     valueColor: AlwaysStoppedAnimation<Color>(
                       AppColors.wordColor,
@@ -280,52 +287,52 @@ class _PracticeScreenState extends State<PracticeScreen>
     );
   }
 
-  Widget _buildFillPhaseResult(
-    BuildContext context,
-    PracticeFillPhase fillPhase,
-  ) {
-    final theme = ShadTheme.of(context);
+  // Widget _buildFillPhaseResult(
+  //   BuildContext context,
+  //   PracticeFillPhase fillPhase,
+  // ) {
+  //   final theme = ShadTheme.of(context);
 
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-      decoration: BoxDecoration(
-        color:
-            fillPhase.isCorrect
-                ? AppColors.successColor.withAlpha(25)
-                : AppColors.errorColor.withAlpha(25),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Icon(
-            fillPhase.isCorrect ? LucideIcons.circleCheck : LucideIcons.circleX,
-            color:
-                fillPhase.isCorrect
-                    ? AppColors.successColor
-                    : AppColors.errorColor,
-            size: 24,
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Text(
-              fillPhase.isCorrect
-                  ? "Great job! You've selected the correct answer."
-                  : "Not quite right. The correct answer is '${fillPhase.blankWord}'. Let's keep practicing!",
-              style: theme.textTheme.p.copyWith(
-                fontWeight: FontWeight.w500,
-                color:
-                    fillPhase.isCorrect
-                        ? AppColors.successColor
-                        : AppColors.errorColor,
-              ),
-              textAlign: TextAlign.left,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  //   return Container(
+  //     padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+  //     decoration: BoxDecoration(
+  //       color:
+  //           fillPhase.isCorrect
+  //               ? AppColors.successColor.withAlpha(25)
+  //               : AppColors.errorColor.withAlpha(25),
+  //       borderRadius: BorderRadius.circular(12),
+  //     ),
+  //     child: Row(
+  //       crossAxisAlignment: CrossAxisAlignment.center,
+  //       children: [
+  //         Icon(
+  //           fillPhase.isCorrect ? LucideIcons.circleCheck : LucideIcons.circleX,
+  //           color:
+  //               fillPhase.isCorrect
+  //                   ? AppColors.successColor
+  //                   : AppColors.errorColor,
+  //           size: 24,
+  //         ),
+  //         const SizedBox(width: 16),
+  //         Expanded(
+  //           child: Text(
+  //             fillPhase.isCorrect
+  //                 ? "Great job! You've selected the correct answer."
+  //                 : "Not quite right. The correct answer is '${fillPhase.blankWord}'. Let's keep practicing!",
+  //             style: theme.textTheme.p.copyWith(
+  //               fontWeight: FontWeight.w500,
+  //               color:
+  //                   fillPhase.isCorrect
+  //                       ? AppColors.successColor
+  //                       : AppColors.errorColor,
+  //             ),
+  //             textAlign: TextAlign.left,
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   Widget _buildFillPhaseUI(BuildContext context, Exercise exercise) {
     final fillPhase = exercise.fillPhase!;
@@ -471,14 +478,14 @@ class _PracticeScreenState extends State<PracticeScreen>
               }),
             ),
 
-            const SizedBox(height: 8),
-
-            if (fillPhase.isSubmitted)
-              _buildFillPhaseResult(context, fillPhase),
-
+            // const SizedBox(height: 8),
+            // if (fillPhase.isSubmitted)
+            //   _buildFillPhaseResult(context, fillPhase),
             const SizedBox(height: 16),
 
             ShadButton(
+              enabled:
+                  fillPhase.isSubmitted || fillPhaseSelectedOptionIndex != -1,
               height: 50,
               onPressed: () {
                 if (!fillPhase.isSubmitted) {
@@ -503,8 +510,7 @@ class _PracticeScreenState extends State<PracticeScreen>
     );
   }
 
-  Widget _buildSpeakPhaseUI(BuildContext context, Exercise exericse) {
-    final speakPhase = exericse.speakPhase!;
+  Widget _buildSpeakPhaseUI(BuildContext context, Exercise exercise) {
     final theme = ShadTheme.of(context);
 
     return SlideTransition(
@@ -527,92 +533,93 @@ class _PracticeScreenState extends State<PracticeScreen>
             ),
             const SizedBox(height: 24),
 
-            Column(
-              children: List.generate(speakPhase.parts.length, (index) {
-                PracticeSpeakingPart part = speakPhase.parts[index];
-                final passed = part.isCorrect == true;
-                final failed = part.isCorrect == false;
+            // Use Watch here to make sure this column rebuilds when the exercise changes
+            Watch((context) {
+              // Force a rebuild of this part of the UI when controller.session changes
+              final currentExercise = controller.session.value?.currentExercise;
+              if (currentExercise == null ||
+                  currentExercise.id != exercise.id) {
+                return const SizedBox.shrink();
+              }
 
-                return AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  margin: EdgeInsets.only(
-                    top: 6,
-                    bottom: 6,
-                    left: index * 2.0, // Slightly staggered layout
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 12,
-                    horizontal: 16,
-                  ),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    color:
-                        passed
-                            ? AppColors.successColor.withAlpha(25)
-                            : failed
-                            ? AppColors.errorColor.withAlpha(25)
-                            : theme.colorScheme.background,
-                    border: Border.all(
-                      color:
-                          passed
-                              ? AppColors.successColor
-                              : failed
-                              ? AppColors.errorColor
-                              : theme.colorScheme.border,
-                      width: 1.5,
+              final updatedSpeakPhase = currentExercise.speakPhase!;
+
+              return Column(
+                children: List.generate(updatedSpeakPhase.parts.length, (
+                  index,
+                ) {
+                  PracticeSpeakingPart part = updatedSpeakPhase.parts[index];
+
+                  return AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    margin: EdgeInsets.only(
+                      top: 6,
+                      bottom: 6,
+                      left: index * 2.0, // Slightly staggered layout
                     ),
-                    boxShadow: [
-                      if (!passed && !failed)
-                        BoxShadow(
-                          color: theme.colorScheme.border.withAlpha(75),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      // Sentence Part
-                      Expanded(
-                        child: Text(
-                          part.content,
-                          style: theme.textTheme.p.copyWith(
-                            color:
-                                passed
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 12,
+                      horizontal: 16,
+                    ),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      color: theme.colorScheme.background,
+                      border: Border.all(
+                        color:
+                            part.isSubmitted
+                                ? part.isCorrect
                                     ? AppColors.successColor
-                                    : failed
-                                    ? AppColors.errorColor
-                                    : theme.colorScheme.foreground,
-                            fontWeight: FontWeight.w500,
+                                    : AppColors.errorColor
+                                : theme.colorScheme.border,
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        // Sentence Part
+                        Expanded(
+                          child: Text(
+                            part.content,
+                            style: theme.textTheme.p.copyWith(
+                              color: theme.colorScheme.foreground,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ),
-                      ),
-                      SizedBox(
-                        height: 24,
-                        width: 24,
-                        child: IconButton(
-                          icon: Icon(
-                            !passed ? LucideIcons.mic : LucideIcons.circleCheck,
-                            size: 22,
-                            color:
-                                !passed
-                                    ? theme.colorScheme.foreground
-                                    : AppColors.successColor,
+                        SizedBox(
+                          height: 24,
+                          width: 24,
+                          child: IconButton(
+                            icon: Icon(
+                              !part.isCorrect
+                                  ? LucideIcons.mic
+                                  : LucideIcons.circleCheck,
+                              size: 22,
+                              color:
+                                  !part.isCorrect
+                                      ? theme.colorScheme.foreground
+                                      : AppColors.successColor,
+                            ),
+                            onPressed:
+                                !part.isCorrect
+                                    ? () => controller.submitSpeakPhasePart(
+                                      index,
+                                      0.9,
+                                    )
+                                    : null,
+                            padding: EdgeInsets.zero, // Remove default padding
+                            constraints:
+                                const BoxConstraints(), // Remove default constraints
                           ),
-                          onPressed:
-                              !passed ? () => part.evaluateSpeech(0.9) : null,
-                          padding: EdgeInsets.zero, // Remove default padding
-                          constraints:
-                              const BoxConstraints(), // Remove default constraints
                         ),
-                      ),
-                    ],
-                  ),
-                );
-              }),
-            ),
+                      ],
+                    ),
+                  );
+                }),
+              );
+            }),
 
             const SizedBox(height: 16),
 
@@ -620,7 +627,7 @@ class _PracticeScreenState extends State<PracticeScreen>
             ShadButton(
               height: 50,
               onPressed: () {
-                // TODO: Handle finishing the speaking session
+                controller.toNextExercise();
               },
               child: const Text("Finish"),
             ),

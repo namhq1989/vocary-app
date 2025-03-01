@@ -21,13 +21,21 @@ class PracticeSession {
   int get completedExercisesCount =>
       exercises.where((exercise) => exercise.isCompleted).length;
 
-  double get completionPercentage =>
-      exercises.isEmpty
-          ? 0
-          : (completedExercisesCount / exercises.length) * 100;
+  double get completionRatio =>
+      exercises.isEmpty ? 0 : completedExercisesCount / exercises.length;
 
-  int get totalPoints =>
-      exercises.fold(0, (sum, exercise) => sum + exercise.totalPoints);
+  int get totalPoints {
+    int total = 0;
+    for (int i = 0; i < exercises.length; i++) {
+      Exercise exercise = exercises[i];
+
+      if (exercise.isCompleted || i == currentExerciseIndex) {
+        total += exercise.totalPoints;
+      }
+    }
+
+    return total;
+  }
 
   Duration get totalTimeSpent => exercises.fold(
     const Duration(),
