@@ -32,7 +32,7 @@ class _PracticeScreenState extends State<PracticeScreen>
   double _currentProgressValue = 0.0;
 
   bool _isShowingSummary = false;
-  bool _isLoadingSummary = false;
+  bool _isLoadingInPlace = false;
 
   // Animation controllers
   late AnimationController _animationController;
@@ -150,12 +150,12 @@ class _PracticeScreenState extends State<PracticeScreen>
 
   void _showSummary() {
     setState(() {
-      _isLoadingSummary = true;
+      _isLoadingInPlace = true;
     });
 
-    Timer(const Duration(milliseconds: 2000), () {
+    Timer(const Duration(milliseconds: 3000), () {
       setState(() {
-        _isLoadingSummary = false;
+        _isLoadingInPlace = false;
         _isShowingSummary = true;
       });
     });
@@ -243,27 +243,8 @@ class _PracticeScreenState extends State<PracticeScreen>
               return const Center(child: Text('Exercise not found'));
             }
 
-            // If summary is being loaded, show loading animation
-            if (_isLoadingSummary) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const SizedBox(
-                      width: 60,
-                      height: 60,
-                      child: CircularProgressIndicator(),
-                    ),
-                    const SizedBox(height: 24),
-                    Text(
-                      'Calculating results...',
-                      style: theme.textTheme.p.copyWith(
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              );
+            if (_isShowingSummary) {
+              return const PracticeSummaryWidget();
             }
 
             // If summary should be shown, display the summary widget
@@ -354,6 +335,11 @@ class _PracticeScreenState extends State<PracticeScreen>
 
   Widget _buildHeader(BuildContext context, PracticeSession session) {
     totalPoints.set(session.totalPoints);
+    int displayedCount = session.completedExercisesCount;
+    if (_isLoadingInPlace) {
+      displayedCount = session.exercises.length;
+    }
+
     final theme = ShadTheme.of(context);
 
     return Padding(
@@ -368,7 +354,7 @@ class _PracticeScreenState extends State<PracticeScreen>
               totalPoints.show(context),
 
               Text(
-                "Exercise: ${session.completedExercisesCount}/${session.exercises.length}",
+                "Exercise: $displayedCount/${session.exercises.length}",
                 style: theme.textTheme.p,
               ),
             ],
@@ -693,6 +679,7 @@ class _PracticeScreenState extends State<PracticeScreen>
 
             ShadButton(
               height: 50,
+              enabled: !_isLoadingInPlace,
               onPressed: () {
                 int completedCountBefore =
                     controller.session.value!.completedExercisesCount;
@@ -721,6 +708,36 @@ class _PracticeScreenState extends State<PracticeScreen>
               },
               child: Text("Complete"),
             ),
+
+            // Add the in-place loading indicator and text
+            if (_isLoadingInPlace)
+              Column(
+                children: [
+                  const SizedBox(height: 48),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            theme.colorScheme.primary,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Text(
+                        "Evaluating your performance...",
+                        style: theme.textTheme.p.copyWith(
+                          color: theme.colorScheme.foreground.withAlpha(180),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
           ],
         ),
       ),

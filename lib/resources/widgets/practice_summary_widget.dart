@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:vocary/app/controllers/practice_controller.dart';
+import 'package:vocary/app/utils/practice_summary_text.dart';
 import 'package:vocary/core/design.dart';
+import 'package:confetti/confetti.dart';
+import 'dart:math';
 
 /// A widget that displays practice session summary statistics
 class PracticeSummaryWidget extends StatefulWidget {
@@ -16,11 +19,15 @@ class _PracticeSummaryWidgetState extends State<PracticeSummaryWidget>
   late AnimationController _animationController;
   late Animation<double> _fadeInAnimation;
   late Animation<Offset> _slideAnimation;
+  late ConfettiController _leftConfettiController;
+  late ConfettiController _rightConfettiController;
 
-  int _correctAnswers = 0;
-  double _averageAccuracy = 0.0;
-  int _totalExercises = 0;
-  int _masteredWords = 0;
+  late String _headerText;
+  late String _titleText;
+
+  double _averageAccuracy = 80;
+  int _totalExercises = 10;
+  int _totalPoints = 120;
 
   @override
   void initState() {
@@ -28,6 +35,13 @@ class _PracticeSummaryWidgetState extends State<PracticeSummaryWidget>
 
     // Calculate summary statistics
     _calculateStats();
+
+    _headerText = PracticeSummaryTextOptions.getRandomHeaderText(
+      _averageAccuracy,
+    );
+    _titleText = PracticeSummaryTextOptions.getRandomTitleText(
+      _averageAccuracy,
+    );
 
     // Initialize animations
     _animationController = AnimationController(
@@ -47,18 +61,34 @@ class _PracticeSummaryWidgetState extends State<PracticeSummaryWidget>
       CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
     );
 
+    // Initialize confetti controllers with 1 second duration
+    _leftConfettiController = ConfettiController(
+      duration: const Duration(seconds: 1),
+    );
+
+    _rightConfettiController = ConfettiController(
+      duration: const Duration(seconds: 1),
+    );
+
     // Start animations after build
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _animationController.forward();
+
+      // Play confetti if accuracy is high enough
+      if (_averageAccuracy >= 80) {
+        _leftConfettiController.play();
+        _rightConfettiController.play();
+      }
     });
   }
 
   void _calculateStats() {
-    // Use Watch to access the session signal
+    // Use session signal to access data
     final session = PracticeController().session.value;
     if (session == null) return;
 
     _totalExercises = session.exercises.length;
+    _totalPoints = session.totalPoints;
 
     int correctFills = 0;
     int correctSpeaks = 0;
@@ -77,18 +107,7 @@ class _PracticeSummaryWidgetState extends State<PracticeSummaryWidget>
         correctSpeaks += correctParts;
         totalSpeakParts += exercise.speakPhase!.parts.length;
       }
-
-      // Count mastered words (assuming a word is mastered if both phases are correct)
-      if (exercise.fillPhase != null &&
-          exercise.speakPhase != null &&
-          exercise.fillPhase!.isCorrect &&
-          exercise.speakPhase!.parts.every((part) => part.isCorrect)) {
-        _masteredWords++;
-      }
     }
-
-    // Calculate total correct answers
-    _correctAnswers = correctFills + correctSpeaks;
 
     // Calculate accuracy (considering both fill and speak phases)
     final totalPossibleCorrect = _totalExercises + totalSpeakParts;
@@ -98,433 +117,250 @@ class _PracticeSummaryWidgetState extends State<PracticeSummaryWidget>
             : 0.0;
   }
 
+  Path drawStar(Size size) {
+    // Method to convert degrees to radians
+    double degToRad(double deg) => deg * (pi / 180.0);
+
+    const numberOfPoints = 5;
+    final halfWidth = size.width / 2;
+    final externalRadius = halfWidth;
+    final internalRadius = halfWidth / 2.5;
+    final degreesPerStep = degToRad(360 / numberOfPoints);
+    final halfDegreesPerStep = degreesPerStep / 2;
+    final path = Path();
+    final fullAngle = degToRad(360);
+    path.moveTo(size.width, halfWidth);
+
+    for (double step = 0; step < fullAngle; step += degreesPerStep) {
+      path.lineTo(
+        halfWidth + externalRadius * cos(step),
+        halfWidth + externalRadius * sin(step),
+      );
+      path.lineTo(
+        halfWidth + internalRadius * cos(step + halfDegreesPerStep),
+        halfWidth + internalRadius * sin(step + halfDegreesPerStep),
+      );
+    }
+    path.close();
+    return path;
+  }
+
   @override
   void dispose() {
     _animationController.dispose();
+    _leftConfettiController.dispose();
+    _rightConfettiController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: _fadeInAnimation,
-      child: SlideTransition(
-        position: _slideAnimation,
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildHeader(context),
-                const SizedBox(height: 24),
-
-                // Total points earned
-                _buildPointsSection(context),
-
-                const SizedBox(height: 32),
-
-                // Stats Cards
-                _buildStatsSection(context),
-
-                const SizedBox(height: 32),
-
-                // Accuracy gauge
-                _buildAccuracySection(context),
-
-                const SizedBox(height: 32),
-
-                // Learning Streak
-                _buildStreakSection(context),
-
-                const SizedBox(height: 32),
-
-                // Action buttons
-                _buildActionButtons(context),
-
-                const SizedBox(height: 16),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context) {
     final theme = ShadTheme.of(context);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Stack(
       children: [
-        Text(
-          'Practice Complete!',
-          style: theme.textTheme.h3.copyWith(fontWeight: FontWeight.bold),
+        // Left side confetti
+        Align(
+          alignment: const Alignment(-0.3, -1),
+          child: ConfettiWidget(
+            confettiController: _leftConfettiController,
+            blastDirection: pi / 2, // Downward
+            blastDirectionality: BlastDirectionality.explosive,
+            emissionFrequency: 0.08,
+            numberOfParticles: 15,
+            maxBlastForce: 30,
+            minBlastForce: 15,
+            gravity: 0.4,
+            particleDrag: 0.2,
+            createParticlePath: drawStar,
+            colors: const [
+              Colors.red,
+              Colors.blue,
+              Colors.green,
+              Colors.yellow,
+              Colors.purple,
+              Colors.orange,
+            ],
+          ),
         ),
-        const SizedBox(height: 8),
-        Text(
-          'Here\'s how you did:',
-          style: theme.textTheme.p.copyWith(
-            color: theme.colorScheme.foreground.withAlpha(180),
+
+        // Right side confetti
+        Align(
+          alignment: const Alignment(0.3, -1),
+          child: ConfettiWidget(
+            confettiController: _rightConfettiController,
+            blastDirection: pi / 2, // Downward
+            blastDirectionality: BlastDirectionality.explosive,
+            emissionFrequency: 0.08,
+            numberOfParticles: 15,
+            maxBlastForce: 30,
+            minBlastForce: 15,
+            gravity: 0.4,
+            particleDrag: 0.2,
+            createParticlePath: drawStar,
+            colors: const [
+              Colors.red,
+              Colors.blue,
+              Colors.green,
+              Colors.yellow,
+              Colors.purple,
+              Colors.orange,
+            ],
+          ),
+        ),
+
+        // Main content
+        FadeTransition(
+          opacity: _fadeInAnimation,
+          child: SlideTransition(
+            position: _slideAnimation,
+            child: Center(
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0,
+                    vertical: 32.0,
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Big icon with light rounded background
+                      Container(
+                        width: 150,
+                        height: 150,
+                        decoration: BoxDecoration(
+                          color: AppColors.wordColor.withAlpha(20),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: SvgPicture.asset(
+                            'assets/images/trophy.svg',
+                            width: 80,
+                            height: 80,
+                            colorFilter: ColorFilter.mode(
+                              AppColors.wordColor,
+                              BlendMode.srcIn,
+                            ),
+                            fit: BoxFit.contain,
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 32),
+
+                      // Header text
+                      Text(
+                        _headerText,
+                        style: theme.textTheme.h2.copyWith(
+                          color: AppColors.wordColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+
+                      const SizedBox(height: 8),
+
+                      // Title text
+                      Text(
+                        _titleText,
+                        style: theme.textTheme.lead.copyWith(fontSize: 18),
+                      ),
+
+                      const SizedBox(height: 40),
+
+                      // Stats row
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          // Points
+                          _buildStatItem(
+                            context,
+                            LucideIcons.star,
+                            'Points',
+                            '$_totalPoints',
+                            AppColors.pointsColor,
+                          ),
+
+                          // Total Exercises
+                          _buildStatItem(
+                            context,
+                            LucideIcons.layoutGrid,
+                            'Exercises',
+                            '$_totalExercises',
+                            AppColors.learnedColor,
+                          ),
+
+                          // Accuracy
+                          _buildStatItem(
+                            context,
+                            LucideIcons.percent,
+                            'Accuracy',
+                            '${_averageAccuracy.round()}%',
+                            _averageAccuracy >= 80
+                                ? AppColors.successColor
+                                : AppColors.errorColor,
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 48),
+
+                      // Buttons
+                      ShadButton(
+                        onPressed: () {
+                          // Continue learning action
+                        },
+                        child: const Text('Continue Learning'),
+                      ),
+
+                      const SizedBox(height: 8),
+
+                      ShadButton.outline(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                        child: const Text('Go Home'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildPointsSection(BuildContext context) {
-    final theme = ShadTheme.of(context);
-    final session = PracticeController().session.value;
-    final totalPoints = session?.totalPoints ?? 0;
-
-    return ShadCard(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(LucideIcons.trophy, color: AppColors.wordColor, size: 28),
-                const SizedBox(width: 8),
-                Text(
-                  'Great Job!',
-                  style: theme.textTheme.h4.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  '$totalPoints',
-                  style: theme.textTheme.h1.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.wordColor,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'points earned',
-              style: theme.textTheme.p.copyWith(
-                color: theme.colorScheme.foreground.withAlpha(180),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatsSection(BuildContext context) {
-    final theme = ShadTheme.of(context);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Your Performance',
-          style: theme.textTheme.h4.copyWith(fontWeight: FontWeight.w500),
-        ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: _buildStatCard(
-                context,
-                '$_correctAnswers',
-                'Correct Answers',
-                LucideIcons.circleCheck,
-                AppColors.successColor,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildStatCard(
-                context,
-                '$_totalExercises',
-                'Total Exercises',
-                LucideIcons.layoutGrid,
-                theme.colorScheme.primary,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _buildStatCard(
-                context,
-                '$_masteredWords',
-                'Words Mastered',
-                LucideIcons.star,
-                AppColors.wordColor,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildStatCard(
-                context,
-                '2:30', // Fixed time for demo
-                'Time Spent',
-                LucideIcons.clock,
-                theme.colorScheme.primary,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStatCard(
+  Widget _buildStatItem(
     BuildContext context,
-    String value,
-    String label,
     IconData icon,
+    String label,
+    String value,
     Color iconColor,
   ) {
     final theme = ShadTheme.of(context);
 
-    return ShadCard(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8.0),
-              decoration: BoxDecoration(
-                color: iconColor.withAlpha(25),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(icon, color: iconColor, size: 20),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    value,
-                    style: theme.textTheme.h4.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    label,
-                    style: theme.textTheme.p.copyWith(
-                      color: theme.colorScheme.foreground.withAlpha(180),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAccuracySection(BuildContext context) {
-    final theme = ShadTheme.of(context);
-
-    // Determine color based on accuracy
-    Color gaugeColor = AppColors.errorColor;
-    if (_averageAccuracy >= 80) {
-      gaugeColor = AppColors.successColor;
-    } else if (_averageAccuracy >= 60) {
-      gaugeColor = AppColors.wordColor;
-    } else if (_averageAccuracy >= 40) {
-      gaugeColor = Colors.orange;
-    }
-
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: iconColor.withAlpha(25),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(icon, color: iconColor, size: 24),
+        ),
+        const SizedBox(height: 8),
         Text(
-          'Accuracy',
-          style: theme.textTheme.h4.copyWith(fontWeight: FontWeight.w500),
+          value,
+          style: theme.textTheme.h4.copyWith(fontWeight: FontWeight.bold),
         ),
-        const SizedBox(height: 16),
-        ShadCard(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      '${_averageAccuracy.toStringAsFixed(1)}%',
-                      style: theme.textTheme.h2.copyWith(
-                        color: gaugeColor,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                // Accuracy gauge bar
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(
-                    value: _averageAccuracy / 100,
-                    backgroundColor: theme.colorScheme.border,
-                    valueColor: AlwaysStoppedAnimation<Color>(gaugeColor),
-                    minHeight: 8,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                // Gauge labels
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Needs Work',
-                      style: theme.textTheme.p.copyWith(
-                        color: theme.colorScheme.foreground.withAlpha(180),
-                      ),
-                    ),
-                    Text(
-                      'Perfect',
-                      style: theme.textTheme.p.copyWith(
-                        color: theme.colorScheme.foreground.withAlpha(180),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStreakSection(BuildContext context) {
-    final theme = ShadTheme.of(context);
-
-    // Get current streak from recent exercises
-    final streak = 3; // This would typically come from your app's state
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
         Text(
-          'Learning Streak',
-          style: theme.textTheme.h4.copyWith(fontWeight: FontWeight.w500),
-        ),
-        const SizedBox(height: 16),
-        ShadCard(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              children: [
-                // Fire icon with colored background
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.orange.withAlpha(25),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    LucideIcons.flame,
-                    color: Colors.orange,
-                    size: 28,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          '$streak',
-                          style: theme.textTheme.h3.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'days',
-                          style: theme.textTheme.h4.copyWith(
-                            color: theme.colorScheme.foreground.withAlpha(180),
-                          ),
-                        ),
-                      ],
-                    ),
-                    Text(
-                      'You\'re on a roll! Keep it up!',
-                      style: theme.textTheme.p.copyWith(
-                        color: theme.colorScheme.foreground.withAlpha(180),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildActionButtons(BuildContext context) {
-    return Column(
-      children: [
-        ShadButton(
-          height: 56,
-          onPressed: () {
-            // Navigate to review screen
-            Navigator.of(context).pop(); // First pop practice screen
-            // Then push vocabulary review screen
-          },
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: const [
-              Icon(LucideIcons.repeat),
-              SizedBox(width: 8),
-              Text('Review Words Again'),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        ShadButton.outline(
-          height: 56,
-          onPressed: () {
-            // Navigate back to home screen
-            Navigator.of(context).pop();
-          },
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: const [
-              Icon(LucideIcons.house),
-              SizedBox(width: 8),
-              Text('Back to Home'),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        ShadButton.ghost(
-          height: 56,
-          onPressed: () {
-            // Share results
-            // This would typically use a share plugin
-          },
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: const [
-              Icon(LucideIcons.share2),
-              SizedBox(width: 8),
-              Text('Share Your Results'),
-            ],
+          label,
+          style: theme.textTheme.p.copyWith(
+            color: theme.colorScheme.foreground.withAlpha(180),
+            fontSize: 14,
           ),
         ),
       ],

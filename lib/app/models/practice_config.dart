@@ -17,7 +17,7 @@ class PracticeConfig {
   static PracticeConfig defaultConfig() {
     return PracticeConfig(
       collectionId: '',
-      wordCount: 3,
+      wordCount: 2,
       answerMethod: AnswerMethod.multipleChoice,
     );
   }
