@@ -87,6 +87,13 @@ class PracticeController {
 
   final session = signal<PracticeSession?>(null);
 
+  bool get isOnFinalExercise {
+    final session = this.session.value;
+    if (session == null) return false;
+
+    return !session.hasNextExercise;
+  }
+
   Future<void> initSession({required PracticeConfig config}) async {
     isFetchingExercises.value = true;
 
@@ -163,10 +170,11 @@ class PracticeController {
     final updatedExercise = exercise.complete();
     updateCurrentExercise(updatedExercise);
 
-    // Move to the next exercise
-    session.value!.toNextExercise();
-
-    // Start the next exercise with a fresh state
-    startExercise();
+    if (isOnFinalExercise) {
+      session.value!.complete();
+      print("Final exercise completed, practice session complete!");
+    } else {
+      session.value!.toNextExercise();
+    }
   }
 }

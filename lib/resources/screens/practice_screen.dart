@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:signals/signals_flutter.dart';
@@ -8,7 +10,9 @@ import 'package:vocary/app/models/practice_session.dart';
 import 'package:vocary/app/models/practice_speak_phase.dart';
 import 'package:vocary/app/signals/navbar_signal.dart';
 import 'package:vocary/core/design.dart';
+import 'package:vocary/core/logger.dart';
 import 'package:vocary/resources/widgets/practice_points_widget.dart';
+import 'package:vocary/resources/widgets/practice_summary_widget.dart';
 import 'package:vocary/resources/widgets/sentence_with_blank_widget.dart';
 
 class PracticeScreen extends StatefulWidget {
@@ -19,17 +23,23 @@ class PracticeScreen extends StatefulWidget {
 }
 
 class _PracticeScreenState extends State<PracticeScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late PracticeController controller;
   late Points totalPoints;
   bool isTransitioning = false;
 
   int fillPhaseSelectedOptionIndex = -1;
+  double _currentProgressValue = 0.0;
 
-  // Animation controller
+  bool _isShowingSummary = false;
+  bool _isLoadingSummary = false;
+
+  // Animation controllers
   late AnimationController _animationController;
   late Animation<Offset> _slideOutAnimation;
   late Animation<Offset> _slideInAnimation;
+  late AnimationController _progressAnimationController;
+  late Animation<double> _progressAnimation;
 
   @override
   void initState() {
@@ -60,6 +70,17 @@ class _PracticeScreenState extends State<PracticeScreen>
     ).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
+
+    _progressAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+    _progressAnimation = Tween<double>(begin: 0.0, end: 0.0).animate(
+      CurvedAnimation(
+        parent: _progressAnimationController,
+        curve: Curves.easeOut,
+      ),
+    );
   }
 
   @override
@@ -74,6 +95,7 @@ class _PracticeScreenState extends State<PracticeScreen>
   void dispose() {
     NavBarSignals.isVisible.value = true;
     _animationController.dispose();
+    _progressAnimationController.dispose();
     totalPoints.dispose();
     super.dispose();
   }
@@ -81,11 +103,14 @@ class _PracticeScreenState extends State<PracticeScreen>
   Future<void> _loadInitialData() async {
     try {
       await controller.initSession(config: PracticeConfig.defaultConfig());
-    } catch (error) {
-      // Handle any errors during initialization
-      if (mounted) {
-        // Show error message or take appropriate action
+
+      if (mounted && controller.session.value != null) {
+        setState(() {
+          _currentProgressValue = controller.session.value!.completionRatio;
+        });
       }
+    } catch (error) {
+      Log.e(error);
     }
   }
 
@@ -123,6 +148,36 @@ class _PracticeScreenState extends State<PracticeScreen>
     return shouldExit ?? false;
   }
 
+  void _showSummary() {
+    setState(() {
+      _isLoadingSummary = true;
+    });
+
+    Timer(const Duration(milliseconds: 2000), () {
+      setState(() {
+        _isLoadingSummary = false;
+        _isShowingSummary = true;
+      });
+    });
+  }
+
+  void _transitionToNextExercise() {
+    setState(() {
+      isTransitioning = true;
+    });
+
+    _animationController.forward().then((_) {
+      controller.startExercise();
+
+      setState(() {
+        isTransitioning = false;
+        fillPhaseSelectedOptionIndex = -1;
+      });
+
+      _animationController.reset();
+    });
+  }
+
   void _transitionToSpeakingMode() {
     setState(() {
       isTransitioning = true;
@@ -135,6 +190,26 @@ class _PracticeScreenState extends State<PracticeScreen>
 
       _animationController.reset();
     });
+  }
+
+  void _animateProgressBar(double targetValue) {
+    // Update the animation with current value as the start point
+    _progressAnimation = Tween<double>(
+      begin: _currentProgressValue,
+      end: targetValue,
+    ).animate(
+      CurvedAnimation(
+        parent: _progressAnimationController,
+        curve: Curves.easeOut,
+      ),
+    );
+
+    // Update the current value for next animation
+    _currentProgressValue = targetValue;
+
+    // Reset and run the animation
+    _progressAnimationController.reset();
+    _progressAnimationController.forward();
   }
 
   @override
@@ -168,6 +243,34 @@ class _PracticeScreenState extends State<PracticeScreen>
               return const Center(child: Text('Exercise not found'));
             }
 
+            // If summary is being loaded, show loading animation
+            if (_isLoadingSummary) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const SizedBox(
+                      width: 60,
+                      height: 60,
+                      child: CircularProgressIndicator(),
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      'Calculating results...',
+                      style: theme.textTheme.p.copyWith(
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            // If summary should be shown, display the summary widget
+            if (_isShowingSummary) {
+              return const PracticeSummaryWidget();
+            }
+
             return Column(
               children: [
                 const SizedBox(height: 8),
@@ -175,16 +278,28 @@ class _PracticeScreenState extends State<PracticeScreen>
                 const SizedBox(height: 8),
                 _buildHeader(context, session),
                 const SizedBox(height: 8),
-                ClipRRect(
-                  child: LinearProgressIndicator(
-                    value: session.completionRatio,
-                    backgroundColor: theme.colorScheme.border,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      AppColors.wordColor,
-                    ),
-                    minHeight: 1,
-                  ),
+
+                AnimatedBuilder(
+                  animation: _progressAnimation,
+                  builder: (context, child) {
+                    final value =
+                        _progressAnimationController.isAnimating
+                            ? _progressAnimation.value
+                            : _currentProgressValue;
+
+                    return ClipRRect(
+                      child: LinearProgressIndicator(
+                        value: value,
+                        backgroundColor: theme.colorScheme.border,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          AppColors.wordColor,
+                        ),
+                        minHeight: 1,
+                      ),
+                    );
+                  },
                 ),
+
                 const SizedBox(height: 48),
 
                 // Scrollable Content (Answers, Feedback, Submit Button)
@@ -263,6 +378,12 @@ class _PracticeScreenState extends State<PracticeScreen>
     );
   }
 
+  Widget _buildCurrentPhaseUI(BuildContext context, Exercise exercise) {
+    return exercise.isSpeakPhase
+        ? _buildSpeakPhaseUI(context, exercise)
+        : _buildFillPhaseUI(context, exercise);
+  }
+
   Widget _buildPracticeContent(BuildContext context, Exercise exercise) {
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 400),
@@ -278,61 +399,9 @@ class _PracticeScreenState extends State<PracticeScreen>
           ],
         );
       },
-      child:
-          isTransitioning
-              ? const SizedBox.shrink() // Empty widget during transition
-              : exercise.isSpeakPhase
-              ? _buildSpeakPhaseUI(context, exercise)
-              : _buildFillPhaseUI(context, exercise),
+      child: _buildCurrentPhaseUI(context, exercise),
     );
   }
-
-  // Widget _buildFillPhaseResult(
-  //   BuildContext context,
-  //   PracticeFillPhase fillPhase,
-  // ) {
-  //   final theme = ShadTheme.of(context);
-
-  //   return Container(
-  //     padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-  //     decoration: BoxDecoration(
-  //       color:
-  //           fillPhase.isCorrect
-  //               ? AppColors.successColor.withAlpha(25)
-  //               : AppColors.errorColor.withAlpha(25),
-  //       borderRadius: BorderRadius.circular(12),
-  //     ),
-  //     child: Row(
-  //       crossAxisAlignment: CrossAxisAlignment.center,
-  //       children: [
-  //         Icon(
-  //           fillPhase.isCorrect ? LucideIcons.circleCheck : LucideIcons.circleX,
-  //           color:
-  //               fillPhase.isCorrect
-  //                   ? AppColors.successColor
-  //                   : AppColors.errorColor,
-  //           size: 24,
-  //         ),
-  //         const SizedBox(width: 16),
-  //         Expanded(
-  //           child: Text(
-  //             fillPhase.isCorrect
-  //                 ? "Great job! You've selected the correct answer."
-  //                 : "Not quite right. The correct answer is '${fillPhase.blankWord}'. Let's keep practicing!",
-  //             style: theme.textTheme.p.copyWith(
-  //               fontWeight: FontWeight.w500,
-  //               color:
-  //                   fillPhase.isCorrect
-  //                       ? AppColors.successColor
-  //                       : AppColors.errorColor,
-  //             ),
-  //             textAlign: TextAlign.left,
-  //           ),
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
 
   Widget _buildFillPhaseUI(BuildContext context, Exercise exercise) {
     final fillPhase = exercise.fillPhase!;
@@ -464,7 +533,9 @@ class _PracticeScreenState extends State<PracticeScreen>
                         if (fillPhase.isSubmitted &&
                             (isCorrectOption || isIncorrectOption))
                           Icon(
-                            isCorrectOption ? LucideIcons.check : LucideIcons.x,
+                            isCorrectOption
+                                ? LucideIcons.circleCheck
+                                : LucideIcons.x,
                             size: 18,
                             color:
                                 isCorrectOption
@@ -478,9 +549,6 @@ class _PracticeScreenState extends State<PracticeScreen>
               }),
             ),
 
-            // const SizedBox(height: 8),
-            // if (fillPhase.isSubmitted)
-            //   _buildFillPhaseResult(context, fillPhase),
             const SizedBox(height: 16),
 
             ShadButton(
@@ -623,13 +691,35 @@ class _PracticeScreenState extends State<PracticeScreen>
 
             const SizedBox(height: 16),
 
-            // Finish Button
             ShadButton(
               height: 50,
               onPressed: () {
+                int completedCountBefore =
+                    controller.session.value!.completedExercisesCount;
+                int totalExercises = controller.session.value!.exercises.length;
+
+                double targetRatio =
+                    (completedCountBefore + 1) / totalExercises;
+
+                bool isMovingToFinalExercise =
+                    completedCountBefore == totalExercises - 2;
+
                 controller.toNextExercise();
+                _animateProgressBar(targetRatio);
+
+                final isLastExercise =
+                    completedCountBefore >= totalExercises - 1;
+                if (isLastExercise) {
+                  controller.session.value?.complete();
+                  _showSummary();
+                } else if (!isMovingToFinalExercise &&
+                    !controller.isOnFinalExercise) {
+                  _transitionToNextExercise();
+                } else if (isMovingToFinalExercise) {
+                  _transitionToNextExercise();
+                }
               },
-              child: const Text("Finish"),
+              child: Text("Complete"),
             ),
           ],
         ),
