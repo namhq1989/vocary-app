@@ -1,5 +1,6 @@
 import 'package:vocary/app/models/practice_fill_phase.dart';
 import 'package:vocary/app/models/practice_speak_phase.dart';
+import 'package:vocary/app/models/practice_attempt.dart';
 import 'package:vocary/app/models/word.dart';
 
 enum ExercisePhase { fill, speak }
@@ -20,6 +21,7 @@ class Exercise {
   DateTime? startedAt;
   DateTime? completedAt;
   Duration timeSpent;
+  PracticeAttemptHistory attemptHistory;
 
   Exercise({
     required this.id,
@@ -36,7 +38,8 @@ class Exercise {
     this.startedAt,
     this.completedAt,
     this.timeSpent = const Duration(),
-  });
+    PracticeAttemptHistory? attemptHistory,
+  }) : attemptHistory = attemptHistory ?? PracticeAttemptHistory();
 
   int get totalPoints {
     int total = 0;
@@ -85,15 +88,40 @@ class Exercise {
   Exercise evaluateFillPhaseAnswer(String answer) {
     if (fillPhase == null) return copyWith();
 
+    // Evaluate the answer
     fillPhase = fillPhase?.evaluateResult(answer);
-    return copyWith(fillPhase: fillPhase);
+
+    // Create and save the attempt history
+    final attempt = PracticeAttempt.forFillPhase(
+      exerciseId: id,
+      answer: answer,
+      isCorrect: fillPhase?.isCorrect ?? false,
+    );
+    attemptHistory.addAttempt(attempt);
+
+    return copyWith(fillPhase: fillPhase, attemptHistory: attemptHistory);
   }
 
   Exercise evaluateSpeakPhasePart(int partIndex, double confidence) {
     if (speakPhase == null) return copyWith();
 
+    // Evaluate the part confidence
     speakPhase = speakPhase?.evaluatePartConfidence(partIndex, confidence);
-    return copyWith(speakPhase: speakPhase);
+
+    // Get the part that was evaluated
+    final part = speakPhase?.parts[partIndex];
+    if (part != null) {
+      // Create and save the attempt history
+      final attempt = PracticeAttempt.forSpeakPhase(
+        exerciseId: id,
+        partIndex: partIndex,
+        answer: confidence.toString(), // Store confidence as the answer
+        isCorrect: part.isCorrect,
+      );
+      attemptHistory.addAttempt(attempt);
+    }
+
+    return copyWith(speakPhase: speakPhase, attemptHistory: attemptHistory);
   }
 
   factory Exercise.fromJson(Map<String, dynamic> json) {
@@ -105,6 +133,10 @@ class Exercise {
       blankWord: json['blankWord'],
       options: List<String>.from(json['options']),
       parts: List<String>.from(json['parts']),
+      attemptHistory:
+          json['attemptHistory'] != null
+              ? PracticeAttemptHistory.fromJson(json['attemptHistory'])
+              : PracticeAttemptHistory(),
     );
 
     e.fillPhase = PracticeFillPhase(
@@ -141,6 +173,7 @@ class Exercise {
       "startedAt": startedAt?.toIso8601String(),
       "completedAt": completedAt?.toIso8601String(),
       "timeSpent": timeSpent.toString(),
+      "attemptHistory": attemptHistory.toJson(),
     };
   }
 
@@ -159,6 +192,7 @@ class Exercise {
     DateTime? startedAt,
     DateTime? completedAt,
     Duration? timeSpent,
+    PracticeAttemptHistory? attemptHistory,
   }) {
     return Exercise(
       id: id ?? this.id,
@@ -175,6 +209,7 @@ class Exercise {
       startedAt: startedAt ?? this.startedAt,
       completedAt: completedAt ?? this.completedAt,
       timeSpent: timeSpent ?? this.timeSpent,
+      attemptHistory: attemptHistory ?? this.attemptHistory,
     );
   }
 }

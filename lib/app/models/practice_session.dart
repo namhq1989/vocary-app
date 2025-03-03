@@ -44,6 +44,18 @@ class PracticeSession {
 
   bool get hasNextExercise => currentExerciseIndex < exercises.length - 1;
 
+  int get accuracyPercent {
+    if (exercises.isEmpty) return 0;
+
+    int totalAccuracyPercent = 0;
+    for (var exercise in exercises) {
+      totalAccuracyPercent += exercise.attemptHistory.accuracyPercent;
+    }
+
+    var percent = totalAccuracyPercent / (exercises.length * 100) * 100;
+    return percent.round();
+  }
+
   void updateExercises(List<Exercise> updatedExercises) =>
       exercises = updatedExercises;
 

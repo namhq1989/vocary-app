@@ -70,9 +70,12 @@ class _AnimatedPointsWidget extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.center,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(LucideIcons.star, color: theme.colorScheme.foreground, size: 16),
+        Icon(LucideIcons.star, color: theme.colorScheme.foreground, size: 18),
         const SizedBox(width: 6),
-        Text("$pointsToShow Points", style: theme.textTheme.p),
+        Text(
+          "$pointsToShow Points",
+          style: theme.textTheme.p.copyWith(fontSize: 18),
+        ),
       ],
     );
   }

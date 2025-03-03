@@ -244,19 +244,19 @@ class _PracticeScreenState extends State<PracticeScreen>
             }
 
             if (_isShowingSummary) {
-              return const PracticeSummaryWidget();
+              return PracticeSummaryWidget(controller);
             }
 
             // If summary should be shown, display the summary widget
             if (_isShowingSummary) {
-              return const PracticeSummaryWidget();
+              return PracticeSummaryWidget(controller);
             }
 
             return Column(
               children: [
                 const SizedBox(height: 8),
                 _buildCustomHeader(context),
-                const SizedBox(height: 8),
+                const SizedBox(height: 24),
                 _buildHeader(context, session),
                 const SizedBox(height: 8),
 
@@ -343,7 +343,7 @@ class _PracticeScreenState extends State<PracticeScreen>
     final theme = ShadTheme.of(context);
 
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -355,7 +355,7 @@ class _PracticeScreenState extends State<PracticeScreen>
 
               Text(
                 "Exercise: $displayedCount/${session.exercises.length}",
-                style: theme.textTheme.p,
+                style: theme.textTheme.p.copyWith(fontSize: 18),
               ),
             ],
           ),

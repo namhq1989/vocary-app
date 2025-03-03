@@ -3,7 +3,7 @@ import 'dart:math';
 /// Class containing text options for summary screen based on accuracy
 class PracticeSummaryTextOptions {
   /// Returns a random header text based on the accuracy percentage
-  static String getRandomHeaderText(double accuracy) {
+  static String getRandomHeaderText(int accuracy) {
     final random = Random();
 
     if (accuracy >= 90) {
@@ -50,7 +50,7 @@ class PracticeSummaryTextOptions {
   }
 
   /// Returns a random title text based on the accuracy percentage
-  static String getRandomTitleText(double accuracy) {
+  static String getRandomTitleText(int accuracy) {
     final random = Random();
 
     if (accuracy >= 80) {
