@@ -145,7 +145,7 @@ class _PracticeSummaryWidgetState extends State<PracticeSummaryWidget>
               numberOfParticles: 15,
               maxBlastForce: 30,
               minBlastForce: 15,
-              gravity: 0.4,
+              gravity: 0.8,
               particleDrag: 0.2,
               createParticlePath: drawStar,
               colors: const [

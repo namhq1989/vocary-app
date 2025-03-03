@@ -12,7 +12,7 @@ final List<Word> _dummyWords = [
       'The occurrence of events by chance in a happy or beneficial way',
       'The fact of finding interesting or valuable things by chance',
     ],
-    pos: ['noun'],
+    pos: ['noun', 'adjective'],
     audioUrl: '',
     level: 'Advanced',
     synonyms: ['fluke', 'fortune'],

@@ -16,7 +16,7 @@ final otherWords = [
     definitions: [
       'The occurrence of events by chance in a happy or beneficial way.',
     ],
-    pos: ['noun'],
+    pos: ['noun', 'adjective'],
     audioUrl: '',
     level: 'Advanced',
     synonyms: ['fluke', 'fortune'],
