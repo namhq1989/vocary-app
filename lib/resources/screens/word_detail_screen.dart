@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:vocary/app/models/word.dart';
+import 'package:vocary/app/models/word_example.dart';
 import 'package:vocary/app/signals/word_store_signal.dart';
 import 'package:vocary/core/design.dart';
+import 'package:vocary/resources/widgets/word_ipa_widget.dart';
 import 'package:vocary/resources/widgets/word_item_widget.dart';
+import 'package:vocary/resources/widgets/word_pos_widget.dart';
 
 final otherWords = [
   Word(
     id: '1',
-    word: 'Serendipity',
+    word: 'serendipity',
     ipa: '/ˌsɛrənˈdɪpɪti/',
     definitions: [
       'The occurrence of events by chance in a happy or beneficial way.',
@@ -18,7 +21,28 @@ final otherWords = [
     level: 'Advanced',
     synonyms: ['fluke', 'fortune'],
     antonyms: ['misfortune'],
-    examples: [],
+    examples: [
+      WordExample(
+        id: '1',
+        word: 'serendipity',
+        sentence:
+            'Serendipity is a term used to describe the occurrence of events by chance that are beneficial or happy',
+        audioUrl: 'https://example.com/audio.mp3',
+      ),
+      WordExample(
+        id: '2',
+        word: 'serendipity',
+        sentence:
+            'The ephemeral nature of social media content makes it difficult to archive',
+        audioUrl: 'https://example.com/audio.mp3',
+      ),
+      WordExample(
+        id: '3',
+        word: 'serendipity',
+        sentence: 'Cherry blossoms are celebrated for their ephemeral beauty',
+        audioUrl: 'https://example.com/audio.mp3',
+      ),
+    ],
     isFavorite: false,
     isMastered: false,
     currentStreak: 2,
@@ -103,7 +127,18 @@ class WordDetailScreen extends StatelessWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(title: Text(word.word)),
+      appBar: AppBar(
+        title: Text(word.word),
+        actions: [
+          InkWell(
+            onTap: () {
+              print('Tapped on Favorite icon');
+            },
+            child: Icon(LucideIcons.star),
+          ),
+          SizedBox(width: 16),
+        ],
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
@@ -111,10 +146,10 @@ class WordDetailScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildHeader(context, word),
-              const SizedBox(height: 16),
-              _buildExamples(context, word),
               const SizedBox(height: 24),
               _buildStats(context, word),
+              const SizedBox(height: 24),
+              _buildExamples(context, word),
               const SizedBox(height: 32),
               _buildOtherWords(context, otherWords),
             ],
@@ -127,82 +162,101 @@ class WordDetailScreen extends StatelessWidget {
   Widget _buildHeader(BuildContext context, Word word) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.start,
           children: [
-            Text(word.word, style: ShadTheme.of(context).textTheme.h2),
-            const SizedBox(width: 8),
-            if (word.isMastered)
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
+            Text(
+              word.word,
+              style: ShadTheme.of(
+                context,
+              ).textTheme.h2.copyWith(color: AppColors.wordColor),
+            ),
+            const SizedBox(width: 16),
+            InkWell(
+              onTap: () {
+                print('Tapped on sound icon');
+              },
+              child: Container(
                 decoration: BoxDecoration(
-                  color: AppColors.masteredColor.withAlpha(26),
-                  borderRadius: BorderRadius.circular(20),
+                  color: AppColors.wordColor.withAlpha(150),
+                  shape: BoxShape.circle,
                 ),
-                child: const Text(
-                  'Mastered',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.masteredColor,
-                  ),
-                ),
+                padding: const EdgeInsets.all(12),
+                child: Icon(LucideIcons.volume2, size: 20, color: Colors.white),
               ),
+            ),
           ],
         ),
         const SizedBox(height: 4),
-        Text(
-          '/ˈsæmpəl/', // Replace with actual IPA from word model
-          style: TextStyle(fontSize: 20, fontFamily: 'NotoSans'),
-        ),
+        WordIpaWidget(ipa: word.ipa, size: 18),
         const SizedBox(height: 8),
         Row(
           children: [
             for (var pos in word.pos) ...[
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: ShadTheme.of(
-                    context,
-                  ).colorScheme.border.withAlpha(127),
-                  borderRadius: BorderRadius.circular(4),
-                  border: Border.all(
-                    color: ShadTheme.of(
-                      context,
-                    ).colorScheme.border.withAlpha(26),
-                  ),
-                ),
-                child: Text(pos, style: TextStyle(fontSize: 11)),
-              ),
+              WordPosWidget(pos: pos),
               const SizedBox(width: 4),
             ],
           ],
         ),
-        const SizedBox(height: 8),
-        Text(word.definitions[0], style: ShadTheme.of(context).textTheme.p),
+        const SizedBox(height: 16),
+        ...word.definitions.map(
+          (definition) => Column(
+            children: [
+              Text(
+                definition,
+                style: ShadTheme.of(context).textTheme.p.copyWith(fontSize: 16),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
       ],
     );
   }
 
   Widget _buildExamples(BuildContext context, Word word) {
-    final examples = [
-      'This is an example sentence using the word "${word.word}".',
-      'Another example sentence that helps understand "${word.word}" better.',
-      'A third sentence to demonstrate the meaning of "${word.word}".-',
-    ];
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('Examples', style: ShadTheme.of(context).textTheme.h3),
-        const SizedBox(height: 8),
-        ...examples.map(
-          (example) => Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Text('• $example', style: ShadTheme.of(context).textTheme.p),
+        const SizedBox(height: 16),
+        ...word.examples.map(
+          (example) => Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Text(
+                      example.sentence,
+                      style: ShadTheme.of(context).textTheme.p,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  InkWell(
+                    onTap: () {},
+                    child: SizedBox(
+                      width: 40,
+                      height: 40,
+                      child: Center(
+                        child: Icon(
+                          LucideIcons.volume2,
+                          color: ShadTheme.of(context).colorScheme.foreground,
+                          size: 24,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              const Divider(),
+              const SizedBox(height: 8),
+            ],
           ),
         ),
       ],
@@ -222,7 +276,7 @@ class WordDetailScreen extends StatelessWidget {
               icon: LucideIcons.penLine,
               iconColor: AppColors.pointsColor,
               value: '${word.currentStreak}',
-              label: 'Practiced',
+              label: 'Attempts',
             ),
           ),
           Expanded(
@@ -232,6 +286,15 @@ class WordDetailScreen extends StatelessWidget {
               iconColor: AppColors.learnedColor,
               value: '${word.currentStreak}',
               label: 'Streak',
+            ),
+          ),
+          Expanded(
+            child: _buildStatColumn(
+              context: context,
+              icon: LucideIcons.graduationCap,
+              iconColor: AppColors.masteredColor,
+              value: '${word.currentStreak}/${word.masteryThreshold}',
+              label: 'Mastery',
             ),
           ),
         ],
@@ -246,15 +309,36 @@ class WordDetailScreen extends StatelessWidget {
     required String value,
     required String label,
   }) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(icon, color: iconColor, size: 32),
-        const SizedBox(height: 12),
-        Text(value, style: ShadTheme.of(context).textTheme.h1),
-        const SizedBox(height: 2),
-        Text(label, style: ShadTheme.of(context).textTheme.muted),
-      ],
+    final theme = ShadTheme.of(context);
+
+    return SizedBox(
+      width: double.infinity,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: iconColor.withAlpha(25),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: iconColor, size: 24),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: theme.textTheme.h3.copyWith(fontWeight: FontWeight.bold),
+          ),
+          Text(
+            label,
+            style: theme.textTheme.p.copyWith(
+              color: theme.colorScheme.foreground.withAlpha(180),
+              fontSize: 16,
+            ),
+          ),
+        ],
+      ),
     );
   }
 

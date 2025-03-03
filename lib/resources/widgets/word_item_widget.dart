@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:vocary/app/signals/word_store_signal.dart';
 import 'package:vocary/core/design.dart';
+import 'package:vocary/resources/widgets/word_ipa_widget.dart';
+import 'package:vocary/resources/widgets/word_pos_widget.dart';
 import 'package:vocary/router/routes.dart';
 
 class WordItemWidget extends StatelessWidget {
@@ -41,24 +43,7 @@ class WordItemWidget extends StatelessWidget {
             Row(
               children: [
                 for (var pos in word.pos) ...[
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: ShadTheme.of(
-                        context,
-                      ).colorScheme.border.withAlpha(127),
-                      borderRadius: BorderRadius.circular(4),
-                      border: Border.all(
-                        color: ShadTheme.of(
-                          context,
-                        ).colorScheme.border.withAlpha(26),
-                      ),
-                    ),
-                    child: Text(pos, style: TextStyle(fontSize: 11)),
-                  ),
+                  WordPosWidget(pos: pos, size: 12),
                   const SizedBox(width: 4),
                 ],
               ],
@@ -69,7 +54,7 @@ class WordItemWidget extends StatelessWidget {
             Text(
               word.word,
               style: TextStyle(
-                fontSize: 15,
+                fontSize: 16,
                 fontWeight: FontWeight.w600,
                 color: AppColors.wordColor,
               ),
@@ -78,14 +63,7 @@ class WordItemWidget extends StatelessWidget {
             ),
             const SizedBox(height: 6),
 
-            Text(
-              word.ipa,
-              style: TextStyle(
-                fontSize: 14,
-                fontStyle: FontStyle.italic,
-                fontFamily: 'NotoSans',
-              ),
-            ),
+            WordIpaWidget(ipa: word.ipa),
             const SizedBox(height: 6),
 
             // Word Meaning
